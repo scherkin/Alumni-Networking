@@ -1,67 +1,80 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { FIELDS, LEVELS, OPEN_TO, classOf, seniority } from "@/lib/constants";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { FIELDS, LEVELS, OPEN_TO, classOf } from "@/lib/constants";
 
-type Row = {
+export type DirectoryRow = {
   id: string; name: string; class_year: number; field: string; specialty: string | null; title: string | null;
-  organization: string | null; city: string | null; college: string | null; open_to: string[]; is_sample: boolean; claimed_by: string | null;
+  organization: string | null; city: string | null; open_to: string[]; is_sample: boolean; claimed_by: string | null;
+  seniority: number; total: number;
 };
+export type Facets = { total: number; samples: number; fields: Record<string, number>; decades: number[] };
+type Params = { q: string; field: string; open: string; decade: string; sort: string };
+
 const initials = (n: string) => n.trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+const nf = new Intl.NumberFormat("en-US");
 
-export default function Directory({ alumni }: { alumni: Row[] }) {
-  const [field, setField] = useState("");
-  const [q, setQ] = useState("");
-  const [open, setOpen] = useState("");
-  const [decade, setDecade] = useState("");
-  const [sort, setSort] = useState("recent");
-  useEffect(() => { try { const s = localStorage.getItem("sort"); if (s) setSort(s); } catch {} }, []);
+export default function Directory({ rows, total, page, pageSize, params, facets }: {
+  rows: DirectoryRow[]; total: number; page: number; pageSize: number; params: Params; facets: Facets;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [pending, start] = useTransition();
+  const [q, setQ] = useState(params.q);
+  const timer = useRef<ReturnType<typeof setTimeout>>();
 
-  const counts = useMemo(() => { const c: Record<string, number> = {}; alumni.forEach((a) => (c[a.field] = (c[a.field] ?? 0) + 1)); return c; }, [alumni]);
-  const decades = useMemo(() => [...new Set(alumni.map((a) => Math.floor(a.class_year / 10) * 10))].sort((a, b) => b - a), [alumni]);
-
-  const list = useMemo(() => {
-    const words = q.toLowerCase().split(/\s+/).filter(Boolean);
-    const out = alumni.filter((a) => {
-      if (field && a.field !== field) return false;
-      if (open && !a.open_to.includes(open)) return false;
-      if (decade && String(Math.floor(a.class_year / 10) * 10) !== decade) return false;
-      if (words.length) {
-        const hay = [a.name, a.title, a.organization, a.college, a.city, a.field, a.specialty].join(" ").toLowerCase();
-        if (!words.every((w) => hay.includes(w))) return false;
-      }
-      return true;
+  const hrefFor = (next: Partial<Params> & { page?: number }) => {
+    const merged = { ...params, ...next };
+    const sp = new URLSearchParams();
+    (Object.keys(merged) as (keyof Params)[]).forEach((k) => {
+      const v = merged[k];
+      if (v && !(k === "sort" && v === "recent")) sp.set(k, String(v));
     });
-    const byYear = (x: Row, y: Row) => x.class_year - y.class_year;
-    return out.sort((x, y) =>
-      sort === "name" ? x.name.localeCompare(y.name)
-      : sort === "title" ? (x.title ?? "~").localeCompare(y.title ?? "~") || x.name.localeCompare(y.name)
-      : sort === "senior" ? seniority(y.title) - seniority(x.title) || byYear(x, y)
-      : sort === "junior" ? seniority(x.title) - seniority(y.title) || byYear(y, x)
-      : sort === "oldest" ? byYear(x, y) : byYear(y, x));
-  }, [alumni, field, q, open, decade, sort]);
+    const p = next.page ?? 1;
+    if (p > 1) sp.set("page", String(p));
+    const s = sp.toString();
+    return s ? `${pathname}?${s}` : pathname;
+  };
+  const go = (next: Partial<Params> & { page?: number }) => start(() => router.replace(hrefFor(next), { scroll: false }));
 
-  const nSample = alumni.filter((a) => a.is_sample).length;
+  useEffect(() => setQ(params.q), [params.q]);
+  const onSearch = (v: string) => {
+    setQ(v);
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => go({ q: v.trim() }), 300);
+  };
+
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+  const from = total ? (page - 1) * pageSize + 1 : 0;
+  const to = Math.min(page * pageSize, total);
+  const fieldTabs = FIELDS.filter((f) => facets.fields[f]);
+  const filtered = params.q || params.field || params.open || params.decade;
+
   return (
-    <>
+    <div aria-busy={pending}>
       <div className="fields" role="group" aria-label="Filter by field">
-        {[["", "All fields", alumni.length] as const, ...FIELDS.filter((f) => counts[f]).map((f) => [f, f, counts[f]] as const)].map(([v, l, n]) => (
-          <button key={l} className="ftab" type="button" aria-pressed={field === v} onClick={() => setField(v)}>
-            {l} <span className="n">{n}</span>
+        <button className="ftab" type="button" aria-pressed={!params.field} onClick={() => go({ field: "" })}>
+          All fields <span className="n">{nf.format(facets.total)}</span>
+        </button>
+        {fieldTabs.map((f) => (
+          <button key={f} className="ftab" type="button" aria-pressed={params.field === f} onClick={() => go({ field: f })}>
+            {f} <span className="n">{nf.format(facets.fields[f])}</span>
           </button>
         ))}
       </div>
       <div className="toolbar">
         <label className="search"><span hidden>Search</span>
-          <input type="search" placeholder="Search name, job title, employer, college, city…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search alumni" />
+          <input type="search" placeholder="Search name, job title, employer, college, city…" value={q}
+            onChange={(e) => onSearch(e.target.value)} aria-label="Search alumni" />
         </label>
-        <select aria-label="Open to" value={open} onChange={(e) => setOpen(e.target.value)}>
+        <select aria-label="Open to" value={params.open} onChange={(e) => go({ open: e.target.value })}>
           <option value="">Open to anything</option>{OPEN_TO.map((o) => <option key={o}>{o}</option>)}
         </select>
-        <select aria-label="Graduation decade" value={decade} onChange={(e) => setDecade(e.target.value)}>
-          <option value="">Any class year</option>{decades.map((d) => <option key={d} value={d}>{d}s graduates</option>)}
+        <select aria-label="Graduation decade" value={params.decade} onChange={(e) => go({ decade: e.target.value })}>
+          <option value="">Any class year</option>{facets.decades.map((d) => <option key={d} value={d}>{d}s graduates</option>)}
         </select>
-        <select aria-label="Sort" value={sort} onChange={(e) => { setSort(e.target.value); try { localStorage.setItem("sort", e.target.value); } catch {} }}>
+        <select aria-label="Sort" value={params.sort} onChange={(e) => go({ sort: e.target.value })}>
           <option value="recent">Newest grads first</option><option value="oldest">Oldest grads first</option>
           <option value="name">Name A–Z</option><option value="title">Job title A–Z</option>
           <option value="senior">Most senior first</option><option value="junior">Early career first</option>
@@ -69,18 +82,21 @@ export default function Directory({ alumni }: { alumni: Row[] }) {
         <Link className="btn" href="/alumni/new">+ Add a profile</Link>
       </div>
       <p className="result-line">
-        Showing {list.length} of {alumni.length} alumni{field ? ` in ${field}` : ""}{nSample ? ` · ${nSample} are made-up sample profiles` : ""}
+        {total ? `Showing ${nf.format(from)}–${nf.format(to)} of ${nf.format(total)} alumni` : "No alumni match"}
+        {params.field ? ` in ${params.field}` : ""}
+        {facets.samples ? ` · ${nf.format(facets.samples)} in the directory are made-up sample profiles` : ""}
+        {pending ? " · Updating…" : ""}
       </p>
-      <section className="grid" aria-live="polite">
-        {!alumni.length && (
+      <section className="grid" aria-live="polite" style={{ opacity: pending ? 0.6 : 1 }}>
+        {!facets.total && (
           <div className="empty"><h2>No alumni in the directory yet</h2><p>Add the first graduate, with their permission to share contact details.</p>
             <Link className="btn" href="/alumni/new">+ Add a profile</Link></div>
         )}
-        {alumni.length > 0 && !list.length && (
+        {facets.total > 0 && !rows.length && (
           <div className="empty"><h2>No matches</h2><p>Try a different field, or clear the search and filters.</p>
-            <button className="btn ghost" type="button" onClick={() => { setField(""); setQ(""); setOpen(""); setDecade(""); }}>Clear filters</button></div>
+            {filtered && <button className="btn ghost" type="button" onClick={() => { setQ(""); go({ q: "", field: "", open: "", decade: "" }); }}>Clear filters</button>}</div>
         )}
-        {list.map((a) => (
+        {rows.map((a) => (
           <Link key={a.id} href={`/alumni/${a.id}`} className="card">
             <div className="card-top">
               <div className="avatar" aria-hidden="true">{initials(a.name)}</div>
@@ -90,7 +106,7 @@ export default function Directory({ alumni }: { alumni: Row[] }) {
               </div>
               <span className="year">{classOf(a.class_year)}</span>
             </div>
-            {seniority(a.title) > 0 && <div className="level">{LEVELS[seniority(a.title)]}</div>}
+            {a.seniority > 0 && <div className="level">{LEVELS[a.seniority]}</div>}
             <div className="meta">
               {a.is_sample && <span className="chip sample">Sample</span>}
               {a.claimed_by && <span className="chip joined">On the network</span>}
@@ -102,6 +118,13 @@ export default function Directory({ alumni }: { alumni: Row[] }) {
           </Link>
         ))}
       </section>
-    </>
+      {pages > 1 && (
+        <nav className="pager" aria-label="Pages">
+          {page > 1 ? <Link className="btn ghost small" href={hrefFor({ page: page - 1 })} scroll={false}>← Previous</Link> : <span />}
+          <span className="muted small">Page {nf.format(page)} of {nf.format(pages)}</span>
+          {page < pages ? <Link className="btn ghost small" href={hrefFor({ page: page + 1 })} scroll={false}>Next →</Link> : <span />}
+        </nav>
+      )}
+    </div>
   );
 }

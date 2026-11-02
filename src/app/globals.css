@@ -173,3 +173,4 @@ table.list th,table.list td{text-align:left;padding:8px 10px;border-bottom:1px s
 .reqs p{margin:2px 0;font-size:14px;overflow-wrap:anywhere}
 .intern-foot{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:10px;margin-top:auto}
 .signin-reason{border-left:3px solid var(--gold);padding-left:12px}
+.pager{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:20px}

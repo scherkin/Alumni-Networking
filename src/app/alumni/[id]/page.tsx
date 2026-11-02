@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireMember } from "@/lib/session";
-import { LEVELS, SCHOOL, classOf, seniority, type AlumniProfile } from "@/lib/constants";
+import { LEVELS, SCHOOL, classOf, type AlumniProfile } from "@/lib/constants";
 import CopyRow from "@/components/CopyRow";
 import { deleteProfile, startConversation } from "@/app/actions";
 
@@ -27,7 +27,7 @@ export default async function ProfilePage({ params, searchParams }: { params: { 
           <div className="eyebrow" style={{ marginTop: 10 }}>{classOf(a.class_year)}</div>
           <h2>{a.name}</h2>
           <div className="role">{a.title}{a.organization ? ` · ${a.organization}` : ""}</div>
-          {seniority(a.title) > 0 && <div className="level" style={{ marginTop: 6 }}>{LEVELS[seniority(a.title)]}</div>}
+          {a.seniority > 0 && <div className="level" style={{ marginTop: 6 }}>{LEVELS[a.seniority]}</div>}
         </div>
         {searchParams.claimed && <p className="notice">This profile is now linked to your account. Messages sent to it come to you on the site and by email.</p>}
         {searchParams.error && <p className="err">Couldn't start that conversation. Try again.</p>}

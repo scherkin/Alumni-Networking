@@ -5,6 +5,9 @@ Messages appear on the site in real time and are emailed to the other person at 
 
 - **Sign in** with LinkedIn (graduates) or an emailed sign-in link (students and staff without LinkedIn).
 - **Directory** of alumni with field tabs, search, filters, and sorting by class year, name, job title or seniority.
+  Search, filtering and paging run in the database (48 per page), so it stays fast with thousands of profiles.
+  Fields include Healthcare & Medicine, Engineering, Business, Finance, Law, Journalism, Media & Communications,
+  Architecture, Performing Arts, Hospitality and Politics & Government, plus others for real profiles.
 - **Messaging**: private conversations between a member and an alumni profile. Each message is also emailed to
   the other side. If the graduate hasn't joined yet, the email invites them to sign in and reply.
 - **Claim this profile**: a graduate proves a profile is theirs with a 6-digit code emailed to the address on the
@@ -45,11 +48,18 @@ You need accounts with Supabase, LinkedIn Developers, Resend and Vercel. All hav
 ### 1. Supabase
 
 1. Create a project at <https://supabase.com>.
-2. In **SQL Editor**, run `supabase/migrations/0001_init.sql`, then `supabase/migrations/0002_internships.sql`,
-   then `supabase/seed.sql` to load the 300 made-up
-   sample profiles (skip the seed if you don't want them).
-3. From **Project Settings → API**, copy the project URL, the `anon` key and the `service_role` key.
-4. In **Authentication → URL Configuration**, set **Site URL** to your site address (for example
+2. In **SQL Editor**, run the files in `supabase/migrations/` in order (`0001`, `0002`, `0003`).
+3. Load the made-up sample data (optional): 5,000 alumni across 11 fields and 33 internships. The file is about
+   1.5 MB, which can be too large for the SQL Editor, so load it from your computer with `psql`, using the
+   connection string from **Project Settings → Database**:
+
+   ```bash
+   psql "postgresql://postgres:YOUR-PASSWORD@db.YOUR-PROJECT.supabase.co:5432/postgres" -f supabase/seed.sql
+   ```
+
+   To change the sample data, edit and run `python3 scripts/generate_seed.py`.
+4. From **Project Settings → API**, copy the project URL, the `anon` key and the `service_role` key.
+5. In **Authentication → URL Configuration**, set **Site URL** to your site address (for example
    `https://alumni.your-school.org`) and add `https://alumni.your-school.org/auth/callback` and
    `http://localhost:3000/auth/callback` to **Redirect URLs**.
 
@@ -92,7 +102,7 @@ Open <http://localhost:3000>.
 1. Push this folder to a GitHub repository and import it at <https://vercel.com/new>.
 2. Add every variable from `.env.example` in **Settings → Environment Variables**, with
    `NEXT_PUBLIC_SITE_URL` set to the live address.
-3. Deploy, then add the live `/auth/callback` URL in Supabase (step 1.4) if you haven't already.
+3. Deploy, then add the live `/auth/callback` URL in Supabase (step 1.5) if you haven't already.
 
 ### Staff accounts
 
@@ -106,6 +116,7 @@ update public.members set is_staff = true where id = (select id from auth.users 
 ### Removing the sample profiles before launch
 
 ```sql
+delete from public.internships where is_sample;
 delete from public.alumni_profiles where is_sample;
 ```
 
@@ -114,7 +125,9 @@ delete from public.alumni_profiles where is_sample;
 | Path | What it does |
 | --- | --- |
 | `supabase/migrations/0001_init.sql` | Tables, row level security, realtime, unread counter |
-| `supabase/seed.sql` | 300 made-up sample alumni (medicine, engineering, finance) |
+| `supabase/migrations/0003_directory_search.sql` | Seniority levels, paged directory search, field counts |
+| `supabase/seed.sql` | 5,000 made-up alumni and 33 made-up internships |
+| `scripts/generate_seed.py` | Regenerates the sample data |
 | `src/app/actions.ts` | Server actions: joining, claiming, profiles, sending messages and emails |
 | `src/lib/email.ts` | Resend emails for messages and claim codes |
 | `src/app/messages/` and `src/components/Thread.tsx` | Inbox and live conversation view |

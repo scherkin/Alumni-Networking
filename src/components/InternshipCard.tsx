@@ -20,6 +20,7 @@ export default function InternshipCard({ item, compact = false }: { item: Intern
           <h3>{item.role_title}</h3>
         </div>
         <div className="meta" style={{ justifyContent: "flex-end" }}>
+          {item.is_sample && <span className="chip sample">Sample</span>}
           {closed ? <span className="chip">Closed</span> : <span className="chip open">Open</span>}
           <span className={`chip ${item.paid ? "paid" : ""}`}>{item.paid ? `Paid${item.pay_details ? ` · ${item.pay_details}` : ""}` : "Unpaid"}</span>
         </div>
