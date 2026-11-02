@@ -9,6 +9,11 @@ Messages appear on the site in real time and are emailed to the other person at 
   the other side. If the graduate hasn't joined yet, the email invites them to sign in and reply.
 - **Claim this profile**: a graduate proves a profile is theirs with a 6-digit code emailed to the address on the
   profile. If they signed in with that same verified email (for example through LinkedIn), it links automatically.
+- **Internships**: a news box on the home page shows the latest open internships, with a full board at
+  `/internships`. Each posting shows the company, who posted it, a short description, the sign-up link, how many
+  interns they'll take, who can apply (grade levels, minimum GPA, experience) and whether it's paid. Graduates
+  and staff can post; students can browse and filter by pay, grade and field. Postings close automatically after
+  their deadline, and posters can close them early.
 - **Staff review**: staff can read every conversation, release wrong claims and delete profiles.
 
 Stack: Next.js 14 (App Router), Supabase (Postgres, Auth, Realtime), Resend for email. Hosting on Vercel.
@@ -22,7 +27,9 @@ profile. Members can paste their LinkedIn profile URL in their account settings.
 
 ## Privacy and safety
 
-- The whole site requires sign-in. Contact details are visible only to signed-in members.
+- The whole site, including messaging, requires an account. Signed-out visitors go to the sign-in page, where
+  either sign-in option also creates a new account. Contact details are visible only to signed-in members.
+- Only graduates and staff can post internships, and only the poster or staff can edit or delete one.
 - Row level security in Postgres enforces the rules, not just the pages:
   - Conversations and messages are readable only by the two people in them and by staff.
   - Members can't make themselves staff or set who owns a profile. Claims go through the verified server flow.
@@ -38,7 +45,8 @@ You need accounts with Supabase, LinkedIn Developers, Resend and Vercel. All hav
 ### 1. Supabase
 
 1. Create a project at <https://supabase.com>.
-2. In **SQL Editor**, run `supabase/migrations/0001_init.sql`, then `supabase/seed.sql` to load the 300 made-up
+2. In **SQL Editor**, run `supabase/migrations/0001_init.sql`, then `supabase/migrations/0002_internships.sql`,
+   then `supabase/seed.sql` to load the 300 made-up
    sample profiles (skip the seed if you don't want them).
 3. From **Project Settings → API**, copy the project URL, the `anon` key and the `service_role` key.
 4. In **Authentication → URL Configuration**, set **Site URL** to your site address (for example
@@ -111,4 +119,6 @@ delete from public.alumni_profiles where is_sample;
 | `src/lib/email.ts` | Resend emails for messages and claim codes |
 | `src/app/messages/` and `src/components/Thread.tsx` | Inbox and live conversation view |
 | `src/app/alumni/[id]/` | Profile, claim flow and edit form |
+| `supabase/migrations/0002_internships.sql` | Internship board table and posting rules |
+| `src/app/internships/` and `src/components/Internship*.tsx` | Internship board, news box cards, posting form |
 | `src/app/staff/` | Staff review |

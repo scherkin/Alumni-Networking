@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isDeliverable, sendClaimCodeEmail, sendMessageEmail } from "@/lib/email";
-import { FIELDS, OPEN_TO, ROLE_LABEL, SCHOOL, classOf, type Member } from "@/lib/constants";
+import { FIELDS, GRADE_LEVELS, OPEN_TO, ROLE_LABEL, SCHOOL, classOf, type Member } from "@/lib/constants";
 
 type Result = { error?: string; ok?: string };
 
@@ -248,4 +248,58 @@ export async function sendMessage(conversationId: string, raw: string): Promise<
 export async function markRead(conversationId: string) {
   const { supabase, user } = await currentMember();
   await supabase.from("conversation_reads").upsert({ conversation_id: conversationId, member_id: user.id, last_read_at: new Date().toISOString() });
+}
+
+/* ------------------------------------------------------------------ internships */
+
+export async function saveInternship(_: Result, form: FormData): Promise<Result> {
+  const { supabase, user, member } = await currentMember();
+  if (!(member.role === "alum" || member.role === "teacher" || member.is_staff))
+    return { error: "Only graduates and staff can post internships." };
+  const id = str(form.get("id"));
+  const spots = parseInt(str(form.get("spots")), 10);
+  const gpa = parseFloat(str(form.get("min_gpa")));
+  const paid = str(form.get("paid"));
+  const signup_url = str(form.get("signup_url"), 500);
+  const row = {
+    company: str(form.get("company"), 120),
+    role_title: str(form.get("role_title"), 120),
+    description: str(form.get("description"), 600),
+    signup_url,
+    spots: Number.isNaN(spots) ? null : spots,
+    grade_levels: GRADE_LEVELS.filter((g) => form.getAll("grade_levels").includes(g)),
+    min_gpa: Number.isNaN(gpa) ? null : gpa,
+    experience: str(form.get("experience"), 600) || null,
+    paid: paid === "yes",
+    pay_details: paid === "yes" ? str(form.get("pay_details"), 120) || null : null,
+    location: str(form.get("location"), 120) || null,
+    field: FIELDS.includes(str(form.get("field"))) ? str(form.get("field")) : null,
+    deadline: /^\d{4}-\d{2}-\d{2}$/.test(str(form.get("deadline"))) ? str(form.get("deadline")) : null,
+    is_open: id ? form.get("is_open") === "on" : true,
+    updated_at: new Date().toISOString(),
+  };
+  if (!row.company || !row.role_title || !row.description) return { error: "Add the company, the internship title and a short description." };
+  if (!/^https?:\/\/\S+$/i.test(signup_url)) return { error: "Add the sign-up link, starting with https://" };
+  if (paid !== "yes" && paid !== "no") return { error: "Say whether the internship is paid or unpaid." };
+  if (row.spots !== null && (row.spots < 1 || row.spots > 1000)) return { error: "Spots must be between 1 and 1,000." };
+  if (row.min_gpa !== null && (row.min_gpa < 0 || row.min_gpa > 5)) return { error: "Minimum GPA must be between 0 and 5." };
+
+  if (id) {
+    const { data, error } = await supabase.from("internships").update(row).eq("id", id).select("id");
+    if (error || !data?.length) return { error: "You can only edit internships you posted." };
+  } else {
+    const { error } = await supabase.from("internships").insert({ ...row, posted_by: user.id });
+    if (error) return { error: "Couldn't post the internship. Try again." };
+  }
+  revalidatePath("/internships");
+  revalidatePath("/");
+  redirect("/internships");
+}
+
+export async function deleteInternship(id: string) {
+  const { supabase } = await currentMember();
+  await supabase.from("internships").delete().eq("id", id);
+  revalidatePath("/internships");
+  revalidatePath("/");
+  redirect("/internships");
 }

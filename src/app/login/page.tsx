@@ -5,13 +5,16 @@ export default function LoginPage({ searchParams }: { searchParams: { next?: str
   return (
     <div className="narrow stack" style={{ gap: 18, paddingTop: 24 }}>
       <div>
-        <div className="eyebrow">Members only</div>
-        <h2 style={{ fontSize: 30, marginTop: 6 }}>Sign in to the {SCHOOL} alumni network</h2>
+        <div className="eyebrow">{SCHOOL} alumni network</div>
+        <h2 style={{ fontSize: 30, marginTop: 6 }}>Sign in or create your account</h2>
         <p className="muted">
           Graduates can sign in with LinkedIn, which fills in your name and photo and, if your LinkedIn email matches
-          your alumni profile, links it to you automatically. Students and staff can use an email sign-in link.
+          your alumni profile, links it to you automatically. Students and staff can use an email sign-in link. New here? Either option creates your account.
         </p>
       </div>
+      {searchParams.next?.startsWith("/messages") && (
+        <p className="signin-reason">Messaging is for members only. Sign in, or create a free account in one step, to message graduates.</p>
+      )}
       {searchParams.error && <p className="notice">Sign-in didn't finish. Try again, or use the email link instead.</p>}
       <LoginForm next={searchParams.next ?? "/"} />
     </div>

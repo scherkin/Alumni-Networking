@@ -6,6 +6,7 @@ export default function NavTabs({ unread, isStaff }: { unread: number; isStaff: 
   const path = usePathname();
   const tabs = [
     { href: "/", label: "Directory", active: path === "/" || path.startsWith("/alumni") },
+    { href: "/internships", label: "Internships", active: path.startsWith("/internships") },
     { href: "/messages", label: "Messages", active: path.startsWith("/messages"), badge: unread },
     ...(isStaff ? [{ href: "/staff", label: "Staff review", active: path.startsWith("/staff") }] : []),
   ];

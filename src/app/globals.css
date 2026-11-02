@@ -151,3 +151,25 @@ table.list{width:100%;border-collapse:collapse;font-size:14px}
 table.list th,table.list td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
 .table-wrap{overflow-x:auto}
 @media (prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
+
+/* internships */
+.newsbox{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:22px}
+.newsbox-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.newsbox-head h2{font-size:22px}
+.intern-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.intern-list{display:flex;flex-direction:column;gap:14px}
+.intern{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.newsbox .intern{background:var(--bg)}
+.intern.closed{border-left-color:var(--line);opacity:.75}
+.intern-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.intern-company{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.intern h3{font-size:19px;font-weight:600;line-height:1.25;overflow-wrap:anywhere}
+.intern-desc{margin:0;overflow-wrap:anywhere}
+.chip.paid{background:var(--gold-soft);color:var(--gold);border-color:transparent;font-weight:600}
+.facts{display:flex;flex-wrap:wrap;gap:6px 20px;margin:0}
+.facts div{min-width:0}
+.facts dt{font-size:11px;font-family:var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.facts dd{margin:0;font-weight:500;font-variant-numeric:tabular-nums}
+.reqs p{margin:2px 0;font-size:14px;overflow-wrap:anywhere}
+.intern-foot{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:10px;margin-top:auto}
+.signin-reason{border-left:3px solid var(--gold);padding-left:12px}
