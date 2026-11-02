@@ -11,7 +11,7 @@ export default async function EditProfile({ params }: { params: { id: string } }
   if (!canEdit) redirect(`/alumni/${p.id}`);
   return (
     <div className="narrow stack" style={{ gap: 18, maxWidth: 760 }}>
-      <div><div className="eyebrow">Edit profile</div><h2 style={{ fontSize: 30, marginTop: 6 }}>{p.name}</h2></div>
+      <div><h2 className="page-title">Edit profile: {p.name}</h2></div>
       <ProfileForm profile={p} />
     </div>
   );

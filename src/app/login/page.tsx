@@ -5,8 +5,7 @@ export default function LoginPage({ searchParams }: { searchParams: { next?: str
   return (
     <div className="narrow stack" style={{ gap: 18, paddingTop: 24 }}>
       <div>
-        <div className="eyebrow">{SCHOOL} alumni network</div>
-        <h2 style={{ fontSize: 30, marginTop: 6 }}>Sign in or create your account</h2>
+        <h2 className="page-title">Sign in or create your account</h2>
         <p className="muted">
           Graduates can sign in with LinkedIn, which fills in your name and photo and, if your LinkedIn email matches
           your alumni profile, links it to you automatically. Students and staff can use an email sign-in link. New here? Either option creates your account.

@@ -32,15 +32,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Source+Serif+4:opsz,wght@8..60,600&display=swap"
         />
       </head>
       <body>
         <header className="band">
           <div className="wrap">
             <Link href="/" className="brand">
-              <div className="eyebrow">Alumni career network</div>
               <h1>{SCHOOL}</h1>
+              <p className="tagline">Alumni Career Network</p>
             </Link>
             {user && (
               <div className="acct">
@@ -57,7 +57,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     <Link href="/onboarding" className="linkbtn">Edit</Link>
                   </>
                 ) : (
-                  <Link href="/onboarding" className="btn small gold">Finish joining</Link>
+                  <Link href="/onboarding" className="btn small gold">Finish signing up</Link>
                 )}
                 <form action="/auth/signout" method="post">
                   <button className="linkbtn" type="submit">Sign out</button>

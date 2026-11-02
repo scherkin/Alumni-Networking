@@ -41,7 +41,7 @@ export default async function ConversationPage({ params }: { params: { id: strin
       <div className="convo">
         <div className="chead">
           <div style={{ display: "flex", gap: 10, alignItems: "center", minWidth: 0 }}>
-            <Link className="btn ghost small back" href="/messages">← Back</Link>
+            <Link className="btn ghost small back" href="/messages">Back</Link>
             <div style={{ minWidth: 0 }}>
               <span className="tname">{summary?.name ?? alum?.name}</span>
               <span className="role small">{summary?.sub}</span>

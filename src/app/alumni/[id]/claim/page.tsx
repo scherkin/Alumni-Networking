@@ -12,9 +12,8 @@ export default async function ClaimPage({ params }: { params: { id: string } }) 
   return (
     <div className="narrow stack" style={{ gap: 18 }}>
       <div>
-        <Link href={`/alumni/${a.id}`} className="small">← Back to profile</Link>
-        <div className="eyebrow" style={{ marginTop: 10 }}>Claim a profile</div>
-        <h2 style={{ fontSize: 30, marginTop: 6 }}>{a.name}, {classOf(a.class_year)}</h2>
+        <Link href={`/alumni/${a.id}`} className="back-link">Back to profile</Link>
+        <h2 className="page-title">Claim the profile for {a.name}, {classOf(a.class_year)}</h2>
         <p className="muted">
           To prove it's you, we email a 6-digit code to the address already on this profile. Enter it here to link the
           profile to your account. If you signed in with that same email, it links right away.

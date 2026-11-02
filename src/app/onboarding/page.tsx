@@ -31,8 +31,7 @@ export default async function Onboarding({ searchParams }: { searchParams: { nex
   return (
     <div className="narrow stack" style={{ gap: 18 }}>
       <div>
-        <div className="eyebrow">{member ? "Your account" : "Welcome"}</div>
-        <h2 style={{ fontSize: 30, marginTop: 6 }}>{member ? "Your network details" : `Join the ${SCHOOL} network`}</h2>
+        <h2 className="page-title">{member ? "Your network details" : `Join the ${SCHOOL} network`}</h2>
         <p className="muted">Signed in as {user.email}. This tells people who's reaching out.</p>
       </div>
       <OnboardingForm

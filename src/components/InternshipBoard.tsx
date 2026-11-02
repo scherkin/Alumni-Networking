@@ -21,14 +21,14 @@ export default function InternshipBoard({ items, canPost }: { items: InternshipV
       <div className="empty">
         <h2>No internships posted yet</h2>
         <p>Graduates and staff can post openings here with a sign-up link, the number of spots, requirements and pay.</p>
-        {canPost && <Link className="btn" href="/internships/new">+ Post the first internship</Link>}
+        {canPost && <Link className="btn" href="/internships/new">Post the first internship</Link>}
       </div>
     );
   return (
     <>
       <div className="toolbar">
         <select aria-label="Pay" value={pay} onChange={(e) => setPay(e.target.value)}>
-          <option value="">Paid and unpaid</option><option value="paid">Paid only</option><option value="unpaid">Unpaid only</option>
+          <option value="">Paid or unpaid</option><option value="paid">Paid only</option><option value="unpaid">Unpaid only</option>
         </select>
         <select aria-label="Grade" value={grade} onChange={(e) => setGrade(e.target.value)}>
           <option value="">Any grade</option>{GRADE_LEVELS.map((g) => <option key={g}>{g}</option>)}
@@ -40,8 +40,8 @@ export default function InternshipBoard({ items, canPost }: { items: InternshipV
         )}
         <div className="checks"><label><input type="checkbox" checked={showClosed} onChange={(e) => setShowClosed(e.target.checked)} /> Show closed</label></div>
       </div>
-      <p className="result-line">{list.length} {list.length === 1 ? "internship" : "internships"}</p>
-      <div className="intern-grid">
+      <p className="result-line">{list.length} {list.length === 1 ? "internship" : "internships"}{list.length > 0 && list.every((i) => i.is_sample) ? ". These are made-up examples." : ""}</p>
+      <div className="intern-list">
         {list.map((i) => <InternshipCard key={i.id} item={i} />)}
         {!list.length && <div className="empty"><h2>No matches</h2><p>Try different filters.</p></div>}
       </div>

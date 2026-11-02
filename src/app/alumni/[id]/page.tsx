@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireMember } from "@/lib/session";
-import { LEVELS, SCHOOL, classOf, type AlumniProfile } from "@/lib/constants";
+import { LEVELS, SCHOOL, type AlumniProfile } from "@/lib/constants";
 import CopyRow from "@/components/CopyRow";
 import { deleteProfile, startConversation } from "@/app/actions";
 
@@ -23,27 +23,23 @@ export default async function ProfilePage({ params, searchParams }: { params: { 
     <div className="profile">
       <div className="stack" style={{ gap: 18 }}>
         <div>
-          <Link href="/" className="small">← Directory</Link>
-          <div className="eyebrow" style={{ marginTop: 10 }}>{classOf(a.class_year)}</div>
-          <h2>{a.name}</h2>
-          <div className="role">{a.title}{a.organization ? ` · ${a.organization}` : ""}</div>
-          {a.seniority > 0 && <div className="level" style={{ marginTop: 6 }}>{LEVELS[a.seniority]}</div>}
+          <Link href="/" className="back-link">Back to the directory</Link>
+          <h2 style={{ marginTop: 10 }}>{a.name}</h2>
+          <div className="role">{a.title}{a.organization ? `, ${a.organization}` : ""}</div>
         </div>
         {searchParams.claimed && <p className="notice">This profile is now linked to your account. Messages sent to it come to you on the site and by email.</p>}
         {searchParams.error && <p className="err">Couldn't start that conversation. Try again.</p>}
-        {a.is_sample && <p className="notice">This is a made-up sample profile for demonstrating the directory. The person, email and phone number are fictional, and the site never emails sample profiles.</p>}
-        <div className="meta">
-          {a.claimed_by && <span className="chip joined">On the network</span>}
-          <span className="chip field">{a.field}</span>
-          {a.specialty && <span className="chip">{a.specialty}</span>}
-          {a.city && <span className="chip">{a.city}</span>}
-          {a.college && <span className="chip">{a.college}</span>}
-        </div>
-        {a.open_to.length > 0 && (
-          <div><div className="section-label">Happy to help with</div>
-            <div className="meta">{a.open_to.map((o) => <span key={o} className="chip open">{o}</span>)}</div></div>
-        )}
-        {a.bio && <div><div className="section-label">Path & advice for students</div><div className="advice">{a.bio}</div></div>}
+        {a.is_sample && <p className="notice">This is a made-up example profile. The email address and phone number are not real, and the site never emails example profiles.</p>}
+        <dl className="facts-list">
+          <dt>Class of</dt><dd>{a.class_year}</dd>
+          <dt>Field</dt><dd>{a.field}{a.specialty ? `, ${a.specialty}` : ""}</dd>
+          {a.seniority > 0 && <><dt>Career stage</dt><dd>{LEVELS[a.seniority]}</dd></>}
+          {a.city && <><dt>Lives in</dt><dd>{a.city}</dd></>}
+          {a.college && <><dt>Studied at</dt><dd>{a.college}</dd></>}
+          {a.open_to.length > 0 && <><dt>Will help with</dt><dd>{a.open_to.join(", ")}</dd></>}
+          {a.claimed_by && <><dt>On the network</dt><dd>Yes, gets messages here</dd></>}
+        </dl>
+        {a.bio && <div><div className="section-label">About their work</div><p className="advice">{a.bio}</p></div>}
         {canEdit && (
           <div className="actions">
             <Link className="btn ghost small" href={`/alumni/${a.id}/edit`}>Edit profile</Link>
@@ -54,13 +50,13 @@ export default async function ProfilePage({ params, searchParams }: { params: { 
         )}
       </div>
 
-      <aside className="panel stack">
+      <aside className="stack" style={{ paddingTop: 14 }}>
         {isMine ? (
           <p className="muted">This is your profile. Messages to it arrive in your Messages tab and at your sign-in email.</p>
         ) : (
           <>
             <form action={startConversation.bind(null, a.id)}>
-              <button className="btn" type="submit" style={{ width: "100%" }}>Message {first}</button>
+              <button className="btn" type="submit">Send {first} a message</button>
             </form>
             <p className="small muted">
               {a.is_sample
@@ -73,7 +69,7 @@ export default async function ProfilePage({ params, searchParams }: { params: { 
             </p>
           </>
         )}
-        <div className="section-label" style={{ marginTop: 6 }}>Contact</div>
+        <div className="section-label" style={{ marginTop: 10 }}>Contact</div>
         {a.email && <CopyRow label="Email" value={a.email} />}
         {a.phone && <CopyRow label="Phone" value={a.phone} />}
         {a.linkedin_url && <CopyRow label="LinkedIn" value={a.linkedin_url} href={safeUrl(a.linkedin_url)} />}

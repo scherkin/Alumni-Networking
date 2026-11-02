@@ -3,7 +3,7 @@ import { requireMember } from "@/lib/session";
 import { canPostInternships, loadInternships } from "@/lib/internships";
 import { FIELDS, OPEN_TO, isClosed } from "@/lib/constants";
 import Directory, { type DirectoryRow, type Facets } from "@/components/Directory";
-import InternshipCard from "@/components/InternshipCard";
+import { fmtDate } from "@/components/InternshipCard";
 
 const PAGE_SIZE = 48;
 const SORTS = ["recent", "oldest", "name", "title", "senior", "junior"];
@@ -32,33 +32,42 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
   const list = (rows ?? []) as DirectoryRow[];
   const open = internships.filter((i) => !isClosed(i));
 
+  const news = (
+    <section className="news" aria-labelledby="news-h">
+      <div className="news-head">
+        <h2 id="news-h">Open internships</h2>
+        <span className="news-links">
+          {canPostInternships(member) && <Link href="/internships/new">Post an internship</Link>}
+          <Link href="/internships">All internships{open.length ? ` (${open.length})` : ""}</Link>
+        </span>
+      </div>
+      {open.length ? (
+        <ul className="news-list">
+          {open.slice(0, 4).map((i) => (
+            <li key={i.id}>
+              <span><Link href="/internships">{i.role_title}</Link>, {i.company}</span>
+              <span className="when">{i.paid ? "Paid" : "Unpaid"}{i.deadline ? ` · apply by ${fmtDate(i.deadline)}` : ""}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="muted" style={{ margin: 0 }}>
+          No open internships right now.{" "}
+          {canPostInternships(member) ? "Know of one? Post it so students can apply." : "Graduates and staff post openings here, so check back."}
+        </p>
+      )}
+    </section>
+  );
+
   return (
-    <>
-      <section className="newsbox" aria-labelledby="news-h">
-        <div className="newsbox-head">
-          <div><div className="eyebrow">News</div><h2 id="news-h">Open internships</h2></div>
-          <div className="actions">
-            {canPostInternships(member) && <Link className="btn ghost small" href="/internships/new">+ Post one</Link>}
-            <Link className="btn small" href="/internships">See all</Link>
-          </div>
-        </div>
-        {open.length ? (
-          <div className="intern-grid">{open.slice(0, 3).map((i) => <InternshipCard key={i.id} item={i} compact />)}</div>
-        ) : (
-          <p className="muted" style={{ margin: 0 }}>
-            No open internships right now.{" "}
-            {canPostInternships(member) ? "Know of one? Post it so students can apply." : "Check back soon. Graduates and staff post openings here."}
-          </p>
-        )}
-      </section>
-      <Directory
-        rows={list}
-        total={list[0]?.total ?? 0}
-        page={page}
-        pageSize={PAGE_SIZE}
-        params={params}
-        facets={(facets as Facets) ?? { total: 0, samples: 0, fields: {}, decades: [] }}
-      />
-    </>
+    <Directory
+      rows={list}
+      total={list[0]?.total ?? 0}
+      page={page}
+      pageSize={PAGE_SIZE}
+      params={params}
+      facets={(facets as Facets) ?? { total: 0, samples: 0, fields: {}, decades: [] }}
+      top={news}
+    />
   );
 }

@@ -15,9 +15,8 @@ export default function ConversationList({ items, activeId, base = "/messages" }
     <>
       {items.map((c) => (
         <Link key={c.id} href={`${base}/${c.id}`} className="titem" aria-current={c.id === activeId ? "page" : undefined}>
-          <span className={`dot ${c.unread ? "" : "off"}`} aria-label={c.unread ? "Unread" : undefined} />
           <span className="t">
-            <span className="tname">{c.name}</span>
+            <span className="tname">{c.name}{c.unread && <> <span className="new">New</span></>}</span>
             <span className="snip">{c.lastFromMe ? "You: " : ""}{c.lastText || "No messages yet"}</span>
           </span>
           <span className="when">{fmt(c.lastAt)}</span>
