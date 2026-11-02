@@ -46,6 +46,19 @@ Sports & Recreation and Other.
 - **LinkedIn sign-in** (hosted site) fills in name and photo. LinkedIn only shares name, email and photo; job title,
   employer and education are limited to LinkedIn's approved partners, so they can't be imported.
 
+### Student sign-up details (hosted site)
+- When signing up as a **current student**, students can add, all optional:
+  - **Academic activities**, such as AP classes, honor societies or academic teams.
+  - **Extracurricular activities**, such as sports, clubs, jobs or volunteering.
+  - **Careers they're interested in**, picked from the directory's fields, plus a line for anything more specific.
+  - **A transcript PDF**, up to 10 MB. The site checks that it really is a PDF.
+- **Who sees what:** graduates a student has messaged see that student's activities and interests at the top
+  of the conversation, so they know who's writing. **Only the student and staff can open the transcript.**
+  Other students and other graduates see none of it. The database and file storage enforce this.
+- Students can change these details or replace or remove the transcript any time from **Edit** in the header.
+- Staff see each student's interests and a link to their transcript on the staff page.
+- Not available in the GitHub Pages preview, where sign-in is turned off.
+
 ### Claim this profile
 - A graduate can claim the profile that describes them, so messages to it reach them and they can keep it current.
 - **Hosted site:** a 6-digit code is emailed to the address on the profile. Codes are stored hashed, expire after
@@ -126,7 +139,7 @@ These rules were tested against a real Postgres database with pretend students, 
 
 Full steps are in `README.md`. In short:
 
-1. **Supabase:** create a project, run `supabase/migrations/0001` to `0003` in order, then load
+1. **Supabase:** create a project, run `supabase/migrations/0001` to `0004` in order, then load
    `supabase/seed.sql` with `psql` (it's about 1.5 MB, too big for the SQL Editor).
 2. **LinkedIn:** create an app at LinkedIn Developers (it needs a company page, such as the school's), add
    "Sign In with LinkedIn using OpenID Connect", and paste its ID and secret into Supabase's LinkedIn provider.
@@ -141,6 +154,7 @@ Full steps are in `README.md`. In short:
 | `supabase/migrations/0001_init.sql` | Members, alumni profiles, conversations, messages, claim codes, access rules |
 | `supabase/migrations/0002_internships.sql` | Internship board and posting rules |
 | `supabase/migrations/0003_directory_search.sql` | Seniority levels, paged search, field counts |
+| `supabase/migrations/0004_student_profiles.sql` | Student activities, interests and private transcript storage |
 | `supabase/seed.sql` | 5,000 sample alumni and 33 sample internships |
 | `scripts/generate_seed.py` | Regenerates the sample data |
 | `src/app/actions.ts` | Server actions: joining, claiming, profiles, messages, internships, emails |

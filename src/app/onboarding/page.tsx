@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { SCHOOL, classOf, type Member } from "@/lib/constants";
+import { SCHOOL, classOf, type Member, type StudentProfile } from "@/lib/constants";
 import OnboardingForm from "./OnboardingForm";
 
 export default async function Onboarding({ searchParams }: { searchParams: { next?: string } }) {
@@ -20,6 +20,7 @@ export default async function Onboarding({ searchParams }: { searchParams: { nex
       match = data?.[0] ?? null;
     }
   }
+  const { data: student } = await supabase.from("student_profiles").select("*").eq("member_id", user.id).maybeSingle<StudentProfile>();
   const meta = user.user_metadata ?? {};
   const defaults = {
     full_name: member?.full_name || (meta.full_name as string) || (meta.name as string) || "",
@@ -36,6 +37,8 @@ export default async function Onboarding({ searchParams }: { searchParams: { nex
       </div>
       <OnboardingForm
         defaults={defaults}
+        student={student}
+        memberId={user.id}
         isNew={!member}
         next={searchParams.next ?? "/"}
         match={match ? { id: match.id, label: `${match.name}, ${classOf(match.class_year)}${match.title ? ` · ${match.title}` : ""}` } : null}

@@ -28,6 +28,25 @@ const staffEmails = () =>
 
 /* ------------------------------------------------------------------ joining */
 
+const MAX_TRANSCRIPT_BYTES = 10 * 1024 * 1024;
+
+/** Activity lists arrive as repeated form fields; keep up to 20 non-empty, distinct entries. */
+function listFrom(form: FormData, name: string) {
+  const items = form.getAll(name).map((v) => (typeof v === "string" ? v.trim().slice(0, 120) : "")).filter(Boolean);
+  return [...new Set(items)].slice(0, 20);
+}
+
+/** Check an uploaded transcript before anything is saved. Returns nothing when no file was chosen. */
+async function readTranscript(form: FormData): Promise<{ error?: string; bytes?: Uint8Array; name?: string }> {
+  const file = form.get("transcript");
+  if (!(file instanceof File) || file.size === 0) return {};
+  if (file.size > MAX_TRANSCRIPT_BYTES) return { error: "Transcripts can be up to 10 MB. Try saving a smaller PDF." };
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const isPdf = bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46; // "%PDF"
+  if (!isPdf) return { error: "That file isn't a PDF. Save your transcript as a PDF and upload it again." };
+  return { bytes, name: file.name.slice(0, 200) };
+}
+
 export async function saveMember(_: Result, form: FormData): Promise<Result> {
   const { supabase, user, member } = await current();
   const role = str(form.get("role")) as Member["role"];
@@ -39,6 +58,8 @@ export async function saveMember(_: Result, form: FormData): Promise<Result> {
   const linkedin_url = str(form.get("linkedin_url"), 300) || null;
   if (linkedin_url && !/^https:\/\/([a-z]+\.)?linkedin\.com\//i.test(linkedin_url))
     return { error: "LinkedIn links start with https://www.linkedin.com/" };
+  const transcript = role === "student" ? await readTranscript(form) : {};
+  if (transcript.error) return { error: transcript.error };
   const avatar_url = member?.avatar_url ?? (user.user_metadata?.picture as string | undefined) ?? null;
   const row = { full_name, role, grad_year, linkedin_url, avatar_url, updated_at: new Date().toISOString() };
 
@@ -61,6 +82,31 @@ export async function saveMember(_: Result, form: FormData): Promise<Result> {
       await admin.from("members").update({ role: "alum" }).eq("id", user.id);
     }
   }
+  if (role === "student") {
+    const now = new Date().toISOString();
+    const details: Record<string, unknown> = {
+      member_id: user.id,
+      academic_activities: listFrom(form, "academic"),
+      extracurriculars: listFrom(form, "extracurricular"),
+      interests: FIELDS.filter((f) => form.getAll("interests").includes(f)),
+      interest_notes: str(form.get("interest_notes"), 500) || null,
+      updated_at: now,
+    };
+    // Each student has one transcript file, replaced on each upload.
+    const path = `${user.id}/transcript.pdf`;
+    if (form.get("remove_transcript") === "on") {
+      await supabase.storage.from("transcripts").remove([path]);
+      Object.assign(details, { transcript_path: null, transcript_name: null, transcript_uploaded_at: null });
+    } else if (transcript.bytes) {
+      const { error: upErr } = await supabase.storage.from("transcripts")
+        .upload(path, transcript.bytes, { contentType: "application/pdf", upsert: true });
+      if (upErr) return { error: "Your details were saved, but the transcript didn't upload. Try again." };
+      Object.assign(details, { transcript_path: path, transcript_name: transcript.name, transcript_uploaded_at: now });
+    }
+    const { error: spErr } = await supabase.from("student_profiles").upsert(details);
+    if (spErr) return { error: "Your account was saved, but your activities and interests weren't. Try again." };
+  }
+
   revalidatePath("/", "layout");
   redirect(str(form.get("next")) || "/");
 }

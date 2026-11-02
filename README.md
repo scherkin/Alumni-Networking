@@ -17,7 +17,11 @@ Messages appear on the site in real time and are emailed to the other person at 
   interns they'll take, who can apply (grade levels, minimum GPA, experience) and whether it's paid. Graduates
   and staff can post; students can browse and filter by pay, grade and field. Postings close automatically after
   their deadline, and posters can close them early.
-- **Staff review**: staff can read every conversation, release wrong claims and delete profiles.
+- **Student sign-up details**: students can list academic and extracurricular activities, pick the careers
+  they're interested in, and upload a transcript PDF. Graduates they message see their activities and interests;
+  only the student and staff can open the transcript.
+- **Staff review**: staff can read every conversation, release wrong claims, delete profiles and open student
+  transcripts.
 
 Stack: Next.js 14 (App Router), Supabase (Postgres, Auth, Realtime), Resend for email. Hosting on Vercel.
 
@@ -58,7 +62,8 @@ You need accounts with Supabase, LinkedIn Developers, Resend and Vercel. All hav
 ### 1. Supabase
 
 1. Create a project at <https://supabase.com>.
-2. In **SQL Editor**, run the files in `supabase/migrations/` in order (`0001`, `0002`, `0003`).
+2. In **SQL Editor**, run the files in `supabase/migrations/` in order (`0001` to `0004`). `0004` also creates the private
+   `transcripts` storage bucket (PDF only, 10 MB maximum).
 3. Load the made-up sample data (optional): 5,000 alumni across 11 fields and 33 internships. The file is about
    1.5 MB, which can be too large for the SQL Editor, so load it from your computer with `psql`, using the
    connection string from **Project Settings → Database**:
@@ -144,4 +149,6 @@ delete from public.alumni_profiles where is_sample;
 | `src/app/alumni/[id]/` | Profile, claim flow and edit form |
 | `supabase/migrations/0002_internships.sql` | Internship board table and posting rules |
 | `src/app/internships/` and `src/components/Internship*.tsx` | Internship board, news box cards, posting form |
+| `supabase/migrations/0004_student_profiles.sql` | Student activities, interests and private transcript storage |
+| `src/app/transcript/` | Opens a transcript for the student or staff |
 | `src/app/staff/` | Staff review |

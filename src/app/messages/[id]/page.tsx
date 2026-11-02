@@ -23,6 +23,12 @@ export default async function ConversationPage({ params }: { params: { id: strin
   if (participant)
     await supabase.from("conversation_reads").upsert({ conversation_id: conv.id, member_id: user.id, last_read_at: new Date().toISOString() });
 
+  // The graduate (or staff) sees who is writing: the student's activities and interests. Never the transcript.
+  const { data: about } = conv.starter_id !== user.id
+    ? await supabase.from("student_profiles").select("academic_activities, extracurriculars, interests, interest_notes").eq("member_id", conv.starter_id).maybeSingle()
+    : { data: null };
+  const hasAbout = !!about && (about.academic_activities.length || about.extracurriculars.length || about.interests.length || about.interest_notes);
+
   const summary = items.find((i) => i.id === conv.id);
   const names: Record<string, string> = {};
   if (starter) names[starter.id] = starter.full_name || "A network member";
@@ -49,6 +55,17 @@ export default async function ConversationPage({ params }: { params: { id: strin
           </div>
           {alum && <Link className="btn ghost small" href={`/alumni/${alum.id}`}>Profile</Link>}
         </div>
+        {hasAbout && about && (
+          <details className="about-student">
+            <summary>About {starter?.full_name.split(" ")[0] || "this student"}</summary>
+            <dl className="facts-list">
+              {about.interests.length > 0 && <><dt>Interested in</dt><dd>{about.interests.join(", ")}{about.interest_notes ? `. ${about.interest_notes}` : ""}</dd></>}
+              {!about.interests.length && about.interest_notes && <><dt>Interested in</dt><dd>{about.interest_notes}</dd></>}
+              {about.academic_activities.length > 0 && <><dt>Academics</dt><dd>{about.academic_activities.join(", ")}</dd></>}
+              {about.extracurriculars.length > 0 && <><dt>Activities</dt><dd>{about.extracurriculars.join(", ")}</dd></>}
+            </dl>
+          </details>
+        )}
         <Thread
           conversationId={conv.id}
           me={user.id}

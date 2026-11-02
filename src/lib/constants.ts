@@ -42,3 +42,9 @@ export type InternshipView = Internship & {
 /** Closed by the poster, or past its deadline (end of that day). */
 export const isClosed = (i: Pick<Internship, "is_open" | "deadline">) =>
   !i.is_open || (!!i.deadline && new Date(`${i.deadline}T23:59:59`) < new Date());
+
+export type StudentProfile = {
+  member_id: string; academic_activities: string[]; extracurriculars: string[]; interests: string[];
+  interest_notes: string | null; transcript_path: string | null; transcript_name: string | null;
+  transcript_uploaded_at: string | null;
+};

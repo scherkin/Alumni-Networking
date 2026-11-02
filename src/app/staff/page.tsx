@@ -14,6 +14,8 @@ export default async function Staff() {
     supabase.from("members").select("id, full_name, role, grad_year, is_staff, created_at").order("created_at", { ascending: false }).limit(500),
   ]);
   const memberName = new Map((members ?? []).map((m) => [m.id, m.full_name]));
+  const { data: students } = await supabase.from("student_profiles").select("member_id, interests, transcript_path");
+  const studentOf = new Map((students ?? []).map((s) => [s.member_id, s]));
 
   return (
     <div className="stack" style={{ gap: 28 }}>
@@ -47,9 +49,11 @@ export default async function Staff() {
 
       <section className="stack">
         <h2 style={{ fontSize: 24 }}>Members</h2>
-        <div className="table-wrap"><table className="list"><thead><tr><th>Name</th><th>Role</th><th>Joined</th></tr></thead><tbody>
+        <div className="table-wrap"><table className="list"><thead><tr><th>Name</th><th>Role</th><th>Interested in</th><th>Transcript</th><th>Joined</th></tr></thead><tbody>
           {(members ?? []).map((m) => (
             <tr key={m.id}><td>{m.full_name}</td><td>{m.is_staff ? "Staff" : ROLE_LABEL[m.role]}{m.grad_year ? ` · ${classOf(m.grad_year)}` : ""}</td>
+              <td>{studentOf.get(m.id)?.interests.join(", ") || <span className="muted">None listed</span>}</td>
+              <td>{studentOf.get(m.id)?.transcript_path ? <a href={`/transcript/${m.id}`} target="_blank" rel="noopener noreferrer">Open PDF</a> : <span className="muted">None</span>}</td>
               <td>{new Date(m.created_at).toLocaleDateString("en-US")}</td></tr>
           ))}
         </tbody></table></div>
