@@ -1,0 +1,846 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Preview of the Alumni Career Network: a directory of high school graduates by career field, with internships.">
+<style>[hidden]{display:none!important}body{margin:0}img{max-width:100%}</style>
+<title>Alumni Career Network</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: school-directory header band → field "department" tabs → filter row → card grid; profile + form in a sheet */
+:root{
+  --bg:#f5f6f8; --surface:#ffffff; --ink:#152038; --muted:#5b6478; --line:#dfe3ea;
+  --accent:#1d3a8a; --accent-ink:#ffffff; --gold:#c98a00; --gold-soft:#fff3d6;
+  --ok:#1f7a4d; --ok-soft:#e3f4ea; --danger:#b42318;
+  --band:#152038; --band-ink:#f5f6f8; --band-muted:#aab3c8;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1424; --surface:#161e33; --ink:#e8ecf5; --muted:#9aa4bc; --line:#29344f;
+  --accent:#8fb0ff; --accent-ink:#0e1424; --gold:#f2b739; --gold-soft:#3a2f12;
+  --ok:#5fd39a; --ok-soft:#173527; --danger:#ff8a80;
+  --band:#0a0f1c; --band-ink:#e8ecf5; --band-muted:#8d97b0; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1424; --surface:#161e33; --ink:#e8ecf5; --muted:#9aa4bc; --line:#29344f;
+  --accent:#8fb0ff; --accent-ink:#0e1424; --gold:#f2b739; --gold-soft:#3a2f12;
+  --ok:#5fd39a; --ok-soft:#173527; --danger:#ff8a80;
+  --band:#0a0f1c; --band-ink:#e8ecf5; --band-muted:#8d97b0; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0}
+
+/* header band */
+.band{background:var(--band);color:var(--band-ink)}
+.band .wrap{padding-block:28px 22px;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-end;justify-content:space-between}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.band h1{font-size:clamp(28px,4.4vw,44px);font-weight:800;line-height:1.05;margin-top:6px}
+.band p{color:var(--band-muted);margin:8px 0 0;max-width:60ch}
+.school-edit{background:none;border:0;color:var(--band-muted);text-decoration:underline;cursor:pointer;padding:0;font-size:13px;margin-left:6px}
+.stats{display:flex;gap:28px;flex-wrap:wrap}
+.stat b{display:block;font-family:var(--f-display);font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+.stat span{font-size:12px;color:var(--band-muted);text-transform:uppercase;letter-spacing:.08em}
+
+/* field tabs */
+.fields{border-bottom:1px solid var(--line);background:var(--surface)}
+.fields .wrap{display:flex;gap:6px;overflow-x:auto;padding-block:12px;scrollbar-width:thin}
+.ftab{flex:0 0 auto;border:1px solid var(--line);background:transparent;border-radius:999px;padding:6px 12px;cursor:pointer;font-size:13.5px;font-weight:500;display:flex;gap:6px;align-items:center;white-space:nowrap}
+.ftab .n{font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
+.ftab[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.ftab[aria-pressed="true"] .n{color:inherit;opacity:.75}
+
+/* toolbar */
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding-block:18px}
+.search{flex:1 1 260px;min-width:0;position:relative}
+.search input{width:100%;padding:10px 12px 10px 36px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted)}
+select{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);max-width:100%}
+.btn{border:0;border-radius:10px;padding:10px 16px;font-weight:600;cursor:pointer;background:var(--accent);color:var(--accent-ink);display:inline-flex;gap:6px;align-items:center}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.danger{background:transparent;color:var(--danger);border:1px solid var(--line)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.result-line{font-size:13px;color:var(--muted);margin:-4px 0 14px}
+.notice{background:var(--gold-soft);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:14px;margin-bottom:14px}
+
+/* grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;padding-bottom:48px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;cursor:pointer;text-align:left;min-width:0;transition:border-color .15s, transform .15s}
+.card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.card-top{display:flex;gap:12px;align-items:flex-start}
+.avatar{flex:0 0 44px;height:44px;border-radius:50%;background:var(--gold-soft);color:var(--gold);display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:16px}
+.card h3{font-size:18px;font-weight:600;line-height:1.2}
+.role{color:var(--muted);font-size:14px;overflow-wrap:anywhere}
+.year{font-family:var(--f-mono);font-size:12px;color:var(--gold);white-space:nowrap}
+.meta{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;border-radius:999px;padding:3px 9px;background:var(--bg);border:1px solid var(--line);white-space:nowrap}
+.chip.field{border-color:transparent;background:var(--ink);color:var(--bg)}
+.chip.sample{background:var(--gold-soft);color:var(--gold);border-color:transparent;font-weight:600}
+.chip.open{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.level{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.card .loc{font-size:13px;color:var(--muted)}
+
+.empty{grid-column:1/-1;border:1.5px dashed var(--line);border-radius:14px;padding:40px 20px;text-align:center;color:var(--muted)}
+.empty h2{color:var(--ink);font-size:22px;margin-bottom:6px}
+.empty p{max-width:52ch;margin:0 auto 16px}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(10,15,28,.55);display:flex;justify-content:flex-end;z-index:20}
+.sheet{background:var(--surface);width:min(560px,100%);height:100%;overflow-y:auto;padding:max(20px,env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) max(28px,env(safe-area-inset-bottom,0px)) 20px;display:flex;flex-direction:column;gap:18px}
+.sheet-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.x{background:none;border:1px solid var(--line);border-radius:8px;width:36px;height:36px;cursor:pointer;flex:0 0 auto;font-size:18px;line-height:1}
+.sheet h2{font-size:26px;font-weight:800}
+.section-label{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.contact-row{display:flex;gap:10px;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.contact-row div{min-width:0}
+.contact-row .val{font-weight:500;overflow-wrap:anywhere;user-select:all}
+.contact-row .k{font-size:12px;color:var(--muted)}
+.contact-row a{color:var(--accent)}
+.copy{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px;flex:0 0 auto}
+.stack{display:flex;flex-direction:column;gap:8px}
+.advice{background:var(--bg);border-radius:10px;padding:12px 14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.tip{font-size:13px;color:var(--muted);border-left:3px solid var(--gold);padding-left:10px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+
+form{display:flex;flex-direction:column;gap:14px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:520px){.row2{grid-template-columns:1fr}}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;min-width:0}
+label.f input,label.f select,label.f textarea{font-weight:400;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--bg);width:100%}
+label.f small{font-weight:400;color:var(--muted)}
+fieldset{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0}
+legend{font-size:13px;font-weight:600;padding:0 4px}
+.checks{display:flex;flex-wrap:wrap;gap:8px 16px}
+.checks label{display:flex;gap:6px;align-items:center;font-size:14px}
+.consent{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;background:var(--gold-soft);padding:10px 12px;border-radius:10px}
+.err{color:var(--danger);font-size:13.5px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:30}
+@media (prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
+
+/* account + views */
+a.btn{text-decoration:none}
+.btn.small{padding:7px 12px;font-size:13.5px}
+.btn.onband{background:var(--gold);color:var(--band)}
+.acct{display:flex;align-items:center;gap:12px;font-size:14px;margin-left:auto}
+.acct-note{color:var(--band-muted);font-size:13px}
+.acct-id{display:flex;flex-direction:column;align-items:flex-end;line-height:1.3}
+.acct .who{color:var(--band-ink);font-weight:600}
+.acct .role-tag{font-family:var(--f-mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--gold)}
+.views{background:var(--surface);border-bottom:1px solid var(--line)}
+.views .wrap{display:flex;gap:4px}
+.vtab{background:none;border:0;border-bottom:3px solid transparent;padding:12px 14px;font-weight:600;cursor:pointer;color:var(--muted);display:flex;gap:8px;align-items:center}
+.vtab[aria-current="page"]{color:var(--ink);border-bottom-color:var(--gold)}
+.badge{background:var(--accent);color:var(--accent-ink);border-radius:999px;font-size:11.5px;padding:1px 7px;font-variant-numeric:tabular-nums}
+.chip.joined{background:transparent;border-color:var(--accent);color:var(--accent)}
+
+/* messages */
+.msg-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:center;padding-top:18px}
+.privacy{font-size:12.5px;color:var(--muted);margin:0;max-width:72ch}
+.staff-toggle{font-size:13.5px;display:flex;gap:6px;align-items:center}
+.msgs{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden;margin-block:14px 48px;min-height:520px}
+.tlist{border-right:1px solid var(--line);overflow-y:auto;max-height:70vh;min-width:0}
+.titem{display:flex;gap:10px;padding:12px 14px;border:0;border-bottom:1px solid var(--line);background:none;width:100%;text-align:left;cursor:pointer;align-items:flex-start}
+.titem:hover,.titem[aria-current="true"]{background:var(--bg)}
+.titem .t{min-width:0;flex:1}
+.tname{font-weight:600;display:block;overflow-wrap:anywhere}
+.titem .snip{display:block;color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.titem .when{font-size:12px;color:var(--muted);white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:0 0 8px;margin-top:7px}
+.dot.off{background:transparent}
+.convo{display:flex;flex-direction:column;min-width:0;max-height:70vh}
+.chead{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.cbody{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px;min-height:260px}
+.bubble{max-width:78%;padding:9px 12px;border-radius:14px;background:var(--bg);white-space:pre-wrap;overflow-wrap:anywhere;align-self:flex-start}
+.bubble.mine{align-self:flex-end;background:var(--accent);color:var(--accent-ink)}
+.bubble .from{display:block;font-size:12px;font-weight:600;opacity:.8;margin-bottom:2px}
+.bubble .ts{display:block;font-size:11px;opacity:.75;margin-top:3px}
+.sysnote{align-self:center;text-align:center;font-size:13px;color:var(--muted);max-width:52ch;margin:auto}
+.composer{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line);align-items:flex-end}
+.composer textarea{flex:1;min-width:0;resize:vertical;min-height:44px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.convo .privacy{padding:12px 16px;border-top:1px solid var(--line)}
+.back{display:none}
+@media (max-width:760px){
+  .msgs{grid-template-columns:minmax(0,1fr)}
+  .msgs.open .tlist{display:none}
+  .msgs:not(.open) .convo{display:none}
+  .tlist{border-right:0}
+  .back{display:inline-flex}
+}
+
+/* internships + paging */
+.small{font-size:13px}
+.muted{color:var(--muted)}
+.linklike{background:none;border:0;padding:0;color:var(--accent);text-decoration:underline;cursor:pointer;font:inherit}
+.checks-inline{display:flex;gap:6px;align-items:center;font-size:14px}
+.newsbox{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:18px}
+.newsbox-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.newsbox-head h2{font-size:22px;margin-top:4px}
+.intern-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.intern{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.newsbox .intern{background:var(--bg)}
+.intern.closed{border-left-color:var(--line);opacity:.75}
+.intern-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.intern-company{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.intern h3{font-size:19px;font-weight:600;line-height:1.25;overflow-wrap:anywhere}
+.intern-desc{margin:0;overflow-wrap:anywhere}
+.chip.paid{background:var(--gold-soft);color:var(--gold);border-color:transparent;font-weight:600}
+.facts{display:flex;flex-wrap:wrap;gap:6px 20px;margin:0}
+.facts dt{font-size:11px;font-family:var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.facts dd{margin:0;font-weight:500;font-variant-numeric:tabular-nums}
+.reqs p{margin:2px 0;font-size:14px;overflow-wrap:anywhere}
+.intern-foot{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:10px;margin-top:auto}
+.pager{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:-28px 0 48px}
+.pager:empty{display:none}
+</style>
+</head>
+<body>
+
+<header class="band">
+  <div class="wrap">
+    <div>
+      <div class="eyebrow">Alumni career network</div>
+      <h1 id="schoolName">Our High School</h1>
+      <p>Find graduates working in the field you care about, then reach out for advice, a job shadow, or an informational interview. <button class="school-edit" id="editSchool" hidden>Rename school</button></p>
+    </div>
+    <div class="stats" aria-live="polite">
+      <div class="stat"><b id="sAlumni">0</b><span>Alumni</span></div>
+      <div class="stat"><b id="sFields">0</b><span>Fields</span></div>
+      <div class="stat"><b id="sMentors">0</b><span>Open to mentoring</span></div>
+    </div>
+    <div class="acct" id="acct"></div>
+  </div>
+</header>
+
+<nav class="views" aria-label="Sections"><div class="wrap">
+  <button class="vtab" type="button" data-view="directory" aria-current="page">Directory</button>
+  <button class="vtab" type="button" data-view="internships" aria-current="false">Internships</button>
+  <button class="vtab" type="button" data-view="messages" aria-current="false">Messages <span class="badge" id="unread" hidden></span></button>
+</div></nav>
+
+<nav class="fields" id="fieldsNav" aria-label="Filter by field"><div class="wrap" id="fieldTabs"></div></nav>
+
+<main class="wrap" id="viewDir">
+  <section class="newsbox" aria-labelledby="news-h">
+    <div class="newsbox-head">
+      <div><div class="eyebrow">News</div><h2 id="news-h">Open internships</h2></div>
+      <div class="actions"><button class="btn ghost small" type="button" id="newsPost" data-act="postint" hidden>+ Post one</button><button class="btn small" type="button" id="newsAll" data-view="internships">See all</button></div>
+    </div>
+    <div id="newsList"><p class="muted" style="margin:0">Loading internships…</p></div>
+  </section>
+  <div class="toolbar">
+    <label class="search"><span hidden>Search</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Search name, job title, employer, college, city…" aria-label="Search alumni">
+    </label>
+    <select id="openFilter" aria-label="Open to">
+      <option value="">Open to anything</option>
+    </select>
+    <select id="decadeFilter" aria-label="Graduation decade"><option value="">Any class year</option></select>
+    <select id="sort" aria-label="Sort">
+      <option value="recent">Newest grads first</option>
+      <option value="oldest">Oldest grads first</option>
+      <option value="name">Name A–Z</option>
+      <option value="title">Job title A–Z</option>
+      <option value="senior">Most senior first</option>
+      <option value="junior">Early career first</option>
+    </select>
+    <button class="btn" id="addBtn" type="button">+ Add alumnus</button>
+  </div>
+  <div id="notice" class="notice" hidden></div>
+  <div class="result-line" id="resultLine"></div>
+  <section class="grid" id="grid" aria-live="polite"></section>
+  <nav class="pager" id="pager" aria-label="Pages"></nav>
+</main>
+<main class="wrap" id="viewInt" hidden><div id="intRoot"></div><div style="height:48px"></div></main>
+<main class="wrap" id="viewMsg" hidden><div id="msgRoot"></div></main>
+
+<div class="scrim" id="scrim" hidden><aside class="sheet" id="sheet" role="dialog" aria-modal="true"></aside></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const FIELDS=["Healthcare & Medicine","Engineering","Business","Finance","Law","Journalism","Media & Communications","Architecture","Performing Arts","Hospitality","Politics & Government","Technology & Computing","Education","Science & Research","Arts & Design","Military","Skilled Trades","Nonprofit & Social Impact","Sports & Recreation","Other"];
+const OPEN=["Mentoring","Informational interviews","Job shadowing","Internships","Résumé review","College advice"];
+const state={alumni:[],field:"",q:"",open:"",decade:"",sort:"recent",canWrite:null,canAdmin:false,db:null,uid:null,loaded:false};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const initials=n=>(n||"?").trim().split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase();
+const yr=y=>y?`Class of '${String(y).slice(-2)}`:"";
+
+OPEN.forEach(o=>$("openFilter").insertAdjacentHTML("beforeend",`<option>${esc(o)}</option>`));
+
+function toast(msg){const t=$("toast");t.textContent=msg;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,2600)}
+function notice(msg){const n=$("notice");n.textContent=msg||"";n.hidden=!msg}
+
+/* Seniority from job title keywords, highest match wins. Works for profiles people add later too. */
+const LEVELS=["","Student","Early career","Professional","Senior specialist","Manager","Executive / owner"];
+const RANKS=[
+  [1,/\b(student|trainee|apprentice)\b/i],
+  [6,/\b(chief|ceo|cfo|cto|coo|president|vice president|vp|owner|founder|partner|executive director|artistic director|publisher|mayor|senator|state representative|judge)\b/i],
+  [5,/\b(manager|director|administrator|head of|supervisor|principal|managing editor|executive chef|executive producer)\b/i],
+  [4,/\b(senior|sr\.?|lead|physician|surgeon|cardiologist|dentist|cpa|actuary|professional engineer|attorney|architect|counsel|correspondent|anchor|producer)\b/i],
+  [2,/\b(resident|intern|associate|junior|jr\.?|assistant|co-op|investment banking analyst|staff accountant|paralegal|aide|fellow|clerk)\b/i]];
+function seniority(t){t=t||"";if(/physician assistant/i.test(t))return 4;for(const [n,re] of RANKS)if(re.test(t))return n;return t?3:0}
+/* Precompute search text and seniority once per profile, so filtering 5,000 stays instant. */
+function prep(a){a._hay=[a.name,a.title,a.organization,a.college,a.city,a.field,a.specialty].join(" ").toLowerCase();a._sen=seniority(a.title);return a}
+
+function filtered(){
+  const q=state.q.toLowerCase().trim();
+  let list=state.alumni.filter(a=>{
+    if(state.field&&a.field!==state.field)return false;
+    if(state.open&&!(a.openTo||[]).includes(state.open))return false;
+    if(state.decade&&String(Math.floor((+a.classYear||0)/10)*10)!==state.decade)return false;
+    if(q&&!q.split(/\s+/).every(w=>a._hay.includes(w)))return false;
+    return true});
+  const s=state.sort;
+  const byYear=(a,b)=>(a.classYear||0)-(b.classYear||0);
+  list.sort((a,b)=>s==="name"?(a.name||"").localeCompare(b.name||"")
+    :s==="title"?(a.title||"~").localeCompare(b.title||"~")||(a.name||"").localeCompare(b.name||"")
+    :s==="senior"?b._sen-a._sen||byYear(a,b)
+    :s==="junior"?a._sen-b._sen||byYear(b,a)
+    :s==="oldest"?byYear(a,b):byYear(b,a));
+  return list;
+}
+
+function render(){
+  const all=state.alumni;
+  $("sAlumni").textContent=all.length.toLocaleString("en-US");
+  $("sFields").textContent=new Set(all.map(a=>a.field).filter(Boolean)).size;
+  $("sMentors").textContent=all.filter(a=>(a.openTo||[]).includes("Mentoring")).length;
+  // field tabs
+  const counts={};all.forEach(a=>counts[a.field]=(counts[a.field]||0)+1);
+  const tabs=[["","All fields",all.length],...FIELDS.filter(f=>counts[f]).map(f=>[f,f,counts[f]])];
+  $("fieldTabs").innerHTML=tabs.map(([v,l,n])=>`<button class="ftab" type="button" data-field="${esc(v)}" aria-pressed="${state.field===v}">${esc(l)} <span class="n">${n}</span></button>`).join("");
+  // decades
+  const decs=[...new Set(all.map(a=>a.classYear?Math.floor(a.classYear/10)*10:null).filter(Boolean))].sort((a,b)=>b-a);
+  $("decadeFilter").innerHTML=`<option value="">Any class year</option>`+decs.map(d=>`<option value="${d}" ${state.decade==d?"selected":""}>${d}s graduates</option>`).join("");
+  $("addBtn").hidden=state.canWrite===false;
+  $("editSchool").hidden=!state.canAdmin;
+
+  const list=filtered();
+  const g=$("grid");
+  $("pager").innerHTML="";
+  if(!state.loaded){g.innerHTML=`<div class="empty"><h2>Loading the directory…</h2><p>Fetching alumni profiles.</p></div>`;$("resultLine").textContent="";return}
+  if(!all.length){
+    g.innerHTML=`<div class="empty"><h2>No alumni in the directory yet</h2><p>Each profile lists a graduate's field, job, employer, and how students can reach them. Add the first one with their permission to share contact details.</p>${state.canWrite!==false?`<button class="btn" type="button" data-act="add">+ Add the first alumnus</button>`:`<p>Ask a teacher or counselor with edit access to add profiles.</p>`}</div>`;
+    $("resultLine").textContent="";return}
+  const nSample=all.filter(a=>a.sample).length;
+  const PAGE=48,pages=Math.max(1,Math.ceil(list.length/PAGE));
+  if(state.page>pages)state.page=pages;
+  const from=(state.page-1)*PAGE,pageList=list.slice(from,from+PAGE),nf=n=>n.toLocaleString("en-US");
+  $("resultLine").textContent=(list.length?`Showing ${nf(from+1)}–${nf(from+pageList.length)} of ${nf(list.length)} alumni`:"No alumni match")+(state.field?` in ${state.field}`:"")+(nSample?` · ${nf(nSample)} in the directory are made-up sample profiles`:"");
+  if(pages>1)$("pager").innerHTML=`<button class="btn ghost small" type="button" data-act="pg" data-p="${state.page-1}" ${state.page<=1?"disabled":""}>← Previous</button><span class="muted small">Page ${nf(state.page)} of ${nf(pages)}</span><button class="btn ghost small" type="button" data-act="pg" data-p="${state.page+1}" ${state.page>=pages?"disabled":""}>Next →</button>`;
+  if(!list.length){g.innerHTML=`<div class="empty"><h2>No matches</h2><p>Try a different field, or clear the search and filters.</p><button class="btn ghost" type="button" data-act="clear">Clear filters</button></div>`;return}
+  g.innerHTML=pageList.map(a=>`<button class="card" type="button" data-id="${esc(a.id)}">
+    <div class="card-top"><div class="avatar" aria-hidden="true">${esc(initials(a.name))}</div>
+      <div style="min-width:0;flex:1"><h3>${esc(a.name)}</h3><div class="role">${esc(a.title||"")}${a.organization?` · ${esc(a.organization)}`:""}</div></div>
+      <span class="year">${esc(yr(a.classYear))}</span></div>
+    ${a._sen?`<div class="level">${esc(LEVELS[a._sen])}</div>`:""}
+    <div class="meta">${a.sample?`<span class="chip sample">Sample</span>`:""}${a.claimedBy?`<span class="chip joined">On the network</span>`:""}<span class="chip field">${esc(a.field||"Other")}</span>${a.specialty?`<span class="chip">${esc(a.specialty)}</span>`:""}</div>
+    ${(a.openTo||[]).length?`<div class="meta">${a.openTo.slice(0,3).map(o=>`<span class="chip open">${esc(o)}</span>`).join("")}${a.openTo.length>3?`<span class="chip open">+${a.openTo.length-3}</span>`:""}</div>`:""}
+    ${a.city?`<div class="loc">${esc(a.city)}</div>`:""}
+  </button>`).join("");
+}
+
+/* ---------- sheet ---------- */
+let lastFocus=null;
+function openSheet(html){lastFocus=document.activeElement;$("sheet").innerHTML=html;$("scrim").hidden=false;($("sheet").querySelector("input,button"))?.focus()}
+function closeSheet(){$("scrim").hidden=true;$("sheet").innerHTML="";lastFocus?.focus?.()}
+$("scrim").addEventListener("click",e=>{if(e.target.id==="scrim")closeSheet()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("scrim").hidden)closeSheet()});
+
+function contactRow(k,v,href){
+  if(!v)return"";
+  return `<div class="contact-row"><div><div class="k">${esc(k)}</div><div class="val">${href?`<a href="${esc(href)}" target="_blank" rel="noopener">${esc(v)}</a>`:esc(v)}</div></div><button class="copy" type="button" data-copy="${esc(v)}">Copy</button></div>`;
+}
+function safeUrl(u){if(!u)return"";const s=/^https?:\/\//i.test(u)?u:"https://"+u;try{const x=new URL(s);return /^https?:$/.test(x.protocol)?x.href:""}catch{return""}}
+
+function showProfile(id){
+  const a=state.alumni.find(x=>x.id===id);if(!a)return;
+  const contacts=[contactRow("Email",a.email),contactRow("Phone",a.phone),contactRow("LinkedIn",a.linkedin,safeUrl(a.linkedin)),contactRow("Preferred way to reach",a.preferred)].join("");
+  openSheet(`<div class="sheet-head"><div><div class="eyebrow" style="color:var(--gold)">${esc(yr(a.classYear))}</div><h2>${esc(a.name)}</h2><div class="role">${esc(a.title||"")}${a.organization?` · ${esc(a.organization)}`:""}</div></div><button class="x" type="button" data-act="close" aria-label="Close">×</button></div>
+    ${a.sample?`<div class="notice">This is a made-up sample profile for demonstrating the directory. The person, email and phone number are fictional (example.com addresses and 555-01xx numbers), so don't try to contact them.</div>`:""}
+    <div class="meta"><span class="chip field">${esc(a.field||"Other")}</span>${a.specialty?`<span class="chip">${esc(a.specialty)}</span>`:""}${a.city?`<span class="chip">${esc(a.city)}</span>`:""}${a.college?`<span class="chip">${esc(a.college)}</span>`:""}</div>
+    ${(a.openTo||[]).length?`<div><div class="section-label">Happy to help with</div><div class="meta">${a.openTo.map(o=>`<span class="chip open">${esc(o)}</span>`).join("")}</div></div>`:""}
+    ${a.bio?`<div><div class="section-label">Path & advice for students</div><div class="advice">${esc(a.bio)}</div></div>`:""}
+    ${state.member?.alumniId===a.id?`<p class="role">This is your linked profile.</p>`:`<div class="stack"><div class="actions"><button class="btn" type="button" data-act="msg" data-id="${esc(a.id)}">Message on the network</button>${a.email?`<button class="btn ghost" type="button" data-act="email" data-id="${esc(a.id)}">Email</button>`:""}</div>
+    <p class="role" style="font-size:13px">${a.claimedBy?`${esc(a.name.split(" ")[0])} is on the network and gets messages here.`:`${esc(a.name.split(" ")[0])} hasn't joined the network yet. Messages wait until they link their profile, so email may reach them sooner.`}</p></div>`}
+    <div><div class="section-label">Contact</div><div class="stack">${contacts||`<p class="role">No contact details listed yet.</p>`}</div></div>
+    <p class="tip">When you reach out, say you're a student at ${esc(state.school)}, mention ${esc(a.name.split(" ")[0])}'s class year, and ask one specific question. Keep the first message short.</p>
+    ${state.canWrite!==false&&!a.static?`<div class="actions"><button class="btn ghost" type="button" data-act="edit" data-id="${esc(a.id)}">Edit profile</button><button class="btn danger" type="button" data-act="askdel" data-id="${esc(a.id)}">Remove</button></div><div id="delZone"></div>`:""}
+    ${a.updatedAt?`<p class="role" style="font-size:12px">Last updated ${esc(new Date(a.updatedAt).toLocaleDateString())}</p>`:""}`);
+}
+
+function showForm(a){
+  a=a||{openTo:[]};
+  const thisYear=new Date().getFullYear();
+  openSheet(`<div class="sheet-head"><h2>${a.id?"Edit profile":"Add an alumnus"}</h2><button class="x" type="button" data-act="close" aria-label="Close">×</button></div>
+  <form id="aform" novalidate>
+    <div class="row2"><label class="f">Full name *<input id="f_name" required value="${esc(a.name)}" autocomplete="off"></label>
+    <label class="f">Graduation year *<input id="f_year" type="number" min="1900" max="${thisYear+1}" required value="${esc(a.classYear)}"></label></div>
+    <div class="row2"><label class="f">Field *<select id="f_field" required><option value="">Choose a field</option>${FIELDS.map(f=>`<option ${a.field===f?"selected":""}>${esc(f)}</option>`).join("")}</select></label>
+    <label class="f">Specialty <small>e.g. Pediatric nursing, Civil engineering</small><input id="f_spec" value="${esc(a.specialty)}"></label></div>
+    <div class="row2"><label class="f">Job title<input id="f_title" value="${esc(a.title)}"></label>
+    <label class="f">Employer / organization<input id="f_org" value="${esc(a.organization)}"></label></div>
+    <div class="row2"><label class="f">City / region<input id="f_city" value="${esc(a.city)}"></label>
+    <label class="f">College / training<input id="f_college" value="${esc(a.college)}"></label></div>
+    <fieldset><legend>Open to helping students with</legend><div class="checks">${OPEN.map((o,i)=>`<label><input type="checkbox" id="f_open${i}" value="${esc(o)}" ${(a.openTo||[]).includes(o)?"checked":""}> ${esc(o)}</label>`).join("")}</div></fieldset>
+    <div class="row2"><label class="f">Email<input id="f_email" type="email" value="${esc(a.email)}"></label>
+    <label class="f">Phone<input id="f_phone" type="tel" value="${esc(a.phone)}"></label></div>
+    <div class="row2"><label class="f">LinkedIn URL<input id="f_li" value="${esc(a.linkedin)}" placeholder="linkedin.com/in/…"></label>
+    <label class="f">Preferred way to reach<input id="f_pref" value="${esc(a.preferred)}" placeholder="Email first, weekday evenings"></label></div>
+    <label class="f">Career path & advice for students<textarea id="f_bio" rows="4">${esc(a.bio)}</textarea></label>
+    <label class="consent"><input type="checkbox" id="f_consent" ${a.consent?"checked":""}> <span>This graduate agreed to have these contact details shared with current students in this directory.</span></label>
+    <div class="err" id="ferr" role="alert"></div>
+    <div class="actions"><button class="btn" type="submit" id="fsave">${a.id?"Save changes":"Add to directory"}</button><button class="btn ghost" type="button" data-act="close">Cancel</button></div>
+  </form>`);
+  $("aform").addEventListener("submit",e=>{e.preventDefault();save(a.id)});
+}
+
+async function save(id){
+  const v=k=>$(k).value.trim();
+  const rec={name:v("f_name"),classYear:parseInt(v("f_year"))||null,field:v("f_field"),specialty:v("f_spec"),title:v("f_title"),organization:v("f_org"),city:v("f_city"),college:v("f_college"),
+    openTo:OPEN.filter((o,i)=>$("f_open"+i).checked),email:v("f_email"),phone:v("f_phone"),linkedin:v("f_li"),preferred:v("f_pref"),bio:v("f_bio"),consent:$("f_consent").checked,updatedAt:new Date().toISOString()};
+  const err=$("ferr");
+  if(!rec.name||!rec.classYear||!rec.field){err.textContent="Add a name, graduation year, and field before saving.";return}
+  if((rec.email||rec.phone||rec.linkedin)&&!rec.consent){err.textContent="Tick the consent box to confirm this graduate agreed to share their contact details, or remove the contact details.";return}
+  if(!state.db){err.textContent="Saving isn't available in this view. This preview can't save changes.";return}
+  $("fsave").disabled=true;err.textContent="";
+  try{
+    if(id){const old=state.alumni.find(x=>x.id===id)||{};await state.db.doc("alumni/"+id).set({...stripId(old),...rec})}
+    else await state.db.collection("alumni").doc().set({...rec,createdAt:rec.updatedAt,addedBy:state.uid||null});
+    closeSheet();toast(id?"Profile saved":`${rec.name} added to the directory`);
+  }catch(e){
+    $("fsave").disabled=false;
+    if(e?.code==="invalid_argument"){state.canWrite=false;err.textContent="Your access level can view the directory but not change it. Ask the directory owner for Contributor access.";render()}
+    else if(e?.code==="quota_exceeded")err.textContent="The directory is full. Remove outdated profiles to make room.";
+    else err.textContent="Couldn't save right now. Check your connection and try again.";
+  }
+}
+const stripId=o=>{const {id,...r}=o;return r};
+
+async function del(id){
+  try{await state.db.doc("alumni/"+id).delete();closeSheet();toast("Profile removed")}
+  catch(e){$("delZone").innerHTML=`<p class="err">Couldn't remove this profile. ${e?.code==="invalid_argument"?"Your access level can't change the directory.":"Try again."}</p>`}
+}
+
+async function renameSchool(){
+  openSheet(`<div class="sheet-head"><h2>School name</h2><button class="x" type="button" data-act="close" aria-label="Close">×</button></div>
+  <form id="sform"><label class="f">Shown at the top of the directory<input id="s_name" value="${esc(state.school)}" required></label><div class="err" id="serr"></div>
+  <div class="actions"><button class="btn" type="submit">Save name</button></div></form>`);
+  $("sform").addEventListener("submit",async e=>{e.preventDefault();const n=$("s_name").value.trim();if(!n)return;
+    try{await state.db.doc("config/school").set({name:n});closeSheet();toast("School name saved")}catch{$("serr").textContent="Only editors can rename the school."}});
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click",async e=>{
+  const t=e.target.closest("[data-field],[data-id],[data-act],[data-copy]");if(!t)return;
+  if(t.dataset.copy!==undefined){const val=t.dataset.copy;try{await navigator.clipboard.writeText(val);t.textContent="Copied"}catch{const r=document.createRange();r.selectNodeContents(t.previousElementSibling.querySelector(".val"));const s=getSelection();s.removeAllRanges();s.addRange(r);t.textContent="Selected"}setTimeout(()=>t.textContent="Copy",1500);return}
+  const act=t.dataset.act;
+  if(t.classList.contains("ftab")){state.field=t.dataset.field;state.page=1;render();return}
+  if(t.classList.contains("card")){showProfile(t.dataset.id);return}
+  if(act==="close")closeSheet();
+  else if(act==="add")showForm();
+  else if(act==="clear"){state.field="";state.q="";state.open="";state.decade="";state.page=1;$("q").value="";$("openFilter").value="";render()}
+  else if(act==="edit")showForm(state.alumni.find(x=>x.id===t.dataset.id));
+  else if(act==="askdel"){$("delZone").innerHTML=`<div class="notice">Remove this profile for everyone? <div class="actions" style="margin-top:8px"><button class="btn danger" type="button" data-act="del" data-id="${esc(t.dataset.id)}">Yes, remove</button><button class="btn ghost" type="button" data-act="nodel">Keep it</button></div></div>`}
+  else if(act==="nodel")$("delZone").innerHTML="";
+  else if(act==="del")del(t.dataset.id);
+});
+$("addBtn").addEventListener("click",()=>showForm());
+$("editSchool").addEventListener("click",renameSchool);
+let qt;$("q").addEventListener("input",e=>{clearTimeout(qt);qt=setTimeout(()=>{state.q=e.target.value;state.page=1;render()},150)});
+$("openFilter").addEventListener("change",e=>{state.open=e.target.value;state.page=1;render()});
+$("decadeFilter").addEventListener("change",e=>{state.decade=e.target.value;state.page=1;render()});
+$("sort").addEventListener("change",e=>{state.sort=e.target.value;state.page=1;try{localStorage.setItem("sort",state.sort)}catch{}render()});
+try{const s=localStorage.getItem("sort");if(s){state.sort=s;$("sort").value=s}}catch{}
+
+/* ---------- accounts & messaging ---------- */
+Object.assign(state,{ready:false,user:null,myName:"",member:null,members:{},names:{},mineT:{},alumT:{},threads:{},allThreads:{},
+  staffMode:false,active:null,msgs:[],reads:{},draft:"",view:"directory",unsubMsgs:null,mineSub:null,unsubAlumThreads:null,subscribedAlum:undefined,unsubAll:null});
+const ROLE_LABEL={student:"Student",alum:"Alum",staff:"Staff"};
+const tidFor=(starter,alumId)=>`${starter}__${alumId}`;
+const threadById=id=>state.threads[id]||state.allThreads[id];
+function fmtTime(iso){try{const d=new Date(iso);return d.toDateString()===new Date().toDateString()?d.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}):d.toLocaleDateString([],{month:"short",day:"numeric"})}catch{return""}}
+
+async function ensureNames(ids){
+  const need=[...new Set(ids)].filter(id=>id&&!(id in state.names));
+  if(!need.length||!state.user)return;
+  need.forEach(id=>state.names[id]="");
+  try{const ps=await state.user.profiles(need);need.forEach(id=>state.names[id]=ps?.[id]?.name||"")}catch{}
+  if(state.view==="messages")renderMsgs();
+}
+function personName(uid){
+  if(uid===state.uid)return state.myName||"You";
+  const m=state.members[uid];
+  if(m?.alumniId){const a=state.alumni.find(x=>x.id===m.alumniId);if(a)return a.name}
+  return state.names[uid]||"A network member";
+}
+function otherParty(t){
+  const alum=state.alumni.find(x=>x.id===t.alumniId);
+  const alumSide={name:alum?.name||"Removed profile",sub:alum?[alum.title,alum.organization].filter(Boolean).join(" · "):""};
+  const m=state.members[t.starterId];
+  const starterSide={name:personName(t.starterId),sub:m?[ROLE_LABEL[m.role],m.gradYear?yr(m.gradYear):""].filter(Boolean).join(" · "):""};
+  const mine=t.starterId===state.uid||(state.member?.alumniId&&t.alumniId===state.member.alumniId);
+  if(!mine)return{name:`${starterSide.name} → ${alumSide.name}`,sub:"Staff review"};
+  return t.starterId===state.uid?alumSide:starterSide;
+}
+const isUnread=t=>t.lastAt&&t.lastFrom!==state.uid&&!(state.view==="messages"&&state.active?.id===t.id)&&!(state.reads[t.id]>=t.lastAt);
+
+function renderAcct(){
+  const el=$("acct");
+  if(!state.ready){el.innerHTML="";return}
+  if(!state.uid){el.innerHTML=`<span class="acct-note">Preview · sign-in comes with the full site</span>`;return}
+  if(!state.member){el.innerHTML=`<button class="btn small onband" type="button" data-act="join">Join the network</button>`;return}
+  el.innerHTML=`<div class="acct-id"><span class="who">${esc(state.myName||"Signed in")}</span><span class="role-tag">${esc(ROLE_LABEL[state.member.role]||"Member")}${state.member.gradYear?` · ${esc(yr(state.member.gradYear))}`:""}</span></div><button class="school-edit" type="button" data-act="join">Edit</button>`;
+}
+function updateBadge(){const n=Object.values(state.threads).filter(isUnread).length;const b=$("unread");b.textContent=n;b.hidden=!n}
+
+function showJoin(){
+  if(!state.db||!state.uid){toast("Sign-in is turned off in this preview.");return}
+  const m=state.member||{};
+  const roleText={student:"Current student",alum:"Graduate (alum)",staff:"Teacher or staff"};
+  openSheet(`<div class="sheet-head"><h2>${state.member?"Your network profile":"Join the network"}</h2><button class="x" type="button" data-act="close" aria-label="Close">×</button></div>
+  <p>You're signed in as <b>${esc(state.myName||"a claude.ai user")}</b>. Tell people how you're connected to ${esc(state.school)} so they know who's reaching out.</p>
+  <form id="jform" novalidate>
+    <fieldset><legend>I am a…</legend><div class="checks">${Object.keys(roleText).map(r=>`<label><input type="radio" name="j_role" id="j_role_${r}" value="${r}" ${(m.role||"student")===r?"checked":""}> ${roleText[r]}</label>`).join("")}</div></fieldset>
+    <label class="f" id="j_yearL">Graduation year <small>Current students: the year you'll graduate</small><input id="j_year" type="number" min="1900" max="2100" value="${esc(m.gradYear||"")}"></label>
+    <div id="j_alumBox" class="stack"><label class="f">Link your alumni profile <small>Messages sent to your profile will come to you.</small><input id="j_find" placeholder="Search your name" autocomplete="off"></label><div id="j_hits" class="stack"></div><div id="j_picked" class="role"></div></div>
+    <div class="err" id="jerr" role="alert"></div>
+    <div class="actions"><button class="btn" type="submit" id="jsave">Save</button></div>
+  </form>`);
+  let picked=m.alumniId||"";
+  const showPicked=()=>{const a=state.alumni.find(x=>x.id===picked);$("j_picked").textContent=a?`Linked to: ${a.name}, ${yr(a.classYear)}`:"No profile linked yet. If you're not listed, add yourself from the Directory, then link it here."};
+  const syncRole=()=>{const r=document.querySelector('input[name="j_role"]:checked')?.value;$("j_alumBox").hidden=r!=="alum";$("j_yearL").hidden=r==="staff"};
+  document.querySelectorAll('input[name="j_role"]').forEach(i=>i.addEventListener("change",syncRole));syncRole();showPicked();
+  $("j_find").addEventListener("input",e=>{const q=e.target.value.trim().toLowerCase();
+    const hits=q.length<2?[]:state.alumni.filter(a=>!a.static&&(a.name||"").toLowerCase().includes(q)).slice(0,6);
+    $("j_hits").innerHTML=hits.map(a=>{const taken=a.claimedBy&&a.claimedBy!==state.uid;return `<button class="btn ghost small" type="button" data-pick="${esc(a.id)}" ${taken?"disabled":""}>${esc(a.name)} · ${esc(yr(a.classYear))} · ${esc(a.title||"")}${taken?" (already linked)":""}</button>`}).join("")||(q.length>=2?`<p class="role">No matching profile.</p>`:"")});
+  $("j_hits").addEventListener("click",e=>{const b=e.target.closest("[data-pick]");if(!b)return;picked=b.dataset.pick;$("j_hits").innerHTML="";$("j_find").value="";showPicked()});
+  $("jform").addEventListener("submit",async e=>{e.preventDefault();
+    const role=document.querySelector('input[name="j_role"]:checked')?.value||"student";
+    const gradYear=role==="staff"?null:(parseInt($("j_year").value)||null);
+    const alumniId=role==="alum"&&picked?picked:null;
+    $("jsave").disabled=true;$("jerr").textContent="";
+    try{
+      if(alumniId&&alumniId!==m.alumniId){const a=state.alumni.find(x=>x.id===alumniId);if(a?.claimedBy&&a.claimedBy!==state.uid)throw{code:"taken"};await state.db.doc("alumni/"+alumniId).update({claimedBy:state.uid})}
+      if(m.alumniId&&m.alumniId!==alumniId){const old=state.alumni.find(x=>x.id===m.alumniId);if(old?.claimedBy===state.uid)await state.db.doc("alumni/"+m.alumniId).update({claimedBy:null})}
+      const now=new Date().toISOString();
+      await state.db.doc("members/"+state.uid).set({role,gradYear,alumniId,joinedAt:m.joinedAt||now,updatedAt:now});
+      closeSheet();toast(state.member?"Profile updated":"Welcome to the network");
+    }catch(err){$("jsave").disabled=false;$("jerr").textContent=err?.code==="taken"?"Someone else already linked that profile. Ask a counselor to sort it out.":err?.code==="invalid_argument"?"Your access level can't join yet. Ask the directory owner for Contributor access.":"Couldn't save. Check your connection and try again."}
+  });
+}
+
+function subscribeThreads(){
+  if(!state.member||!state.db)return;
+  const db=state.db;
+  const put=(kind,s)=>{state[kind]=Object.fromEntries(s.docs.map(d=>[d.id,{id:d.id,...d.data()}]));state.threads={...state.mineT,...state.alumT};updateBadge();if(state.view==="messages")renderMsgs()};
+  if(!state.mineSub)state.mineSub=db.collection("threads").where("starterId","==",state.uid).limit(500).onSnapshot(s=>put("mineT",s),()=>{});
+  const aid=state.member.alumniId||null;
+  if(aid!==state.subscribedAlum){
+    state.unsubAlumThreads?.();state.subscribedAlum=aid;state.alumT={};state.threads={...state.mineT};
+    state.unsubAlumThreads=aid?db.collection("threads").where("alumniId","==",aid).limit(500).onSnapshot(s=>put("alumT",s),()=>{}):null;
+  }
+}
+function subscribeAll(){
+  if(state.unsubAll)return;
+  state.unsubAll=state.db.collection("threads").orderBy("lastAt","desc").limit(300).onSnapshot(s=>{state.allThreads=Object.fromEntries(s.docs.map(d=>[d.id,{id:d.id,...d.data()}]));if(state.view==="messages")renderMsgs()},()=>{});
+}
+
+let readBusy=false;
+async function markRead(tid){
+  const at=threadById(tid)?.lastAt;
+  if(!at||state.reads[tid]>=at||readBusy||!state.db)return;
+  state.reads={...state.reads,[tid]:at};updateBadge();
+  readBusy=true;try{await state.db.doc(`data/users/${state.uid}/reads`).set(state.reads)}catch{}readBusy=false;
+}
+
+function openThread(tid,meta){
+  if(state.active?.id!==tid){
+    state.unsubMsgs?.();state.msgs=[];state.draft="";
+    state.active={id:tid,...(threadById(tid)||meta||{})};
+    state.unsubMsgs=state.db.collection(`threads/${tid}/messages`).orderBy("at").limit(500).onSnapshot(s=>{state.msgs=s.docs.map(d=>({id:d.id,...d.data()}));if(state.view==="messages")renderMsgs(true)},()=>{state.msgs=[];renderMsgs()});
+  }
+  markRead(tid);renderMsgs(true);
+}
+function startMessage(alumId){
+  if(!state.uid){closeSheet();toast("Messaging is turned off in this preview.");return}
+  if(!state.member){showJoin();return}
+  if(state.member.alumniId===alumId){toast("That's your own profile.");return}
+  closeSheet();state.staffMode=false;setView("messages");
+  openThread(tidFor(state.uid,alumId),{starterId:state.uid,alumniId:alumId});
+  $("m_text")?.focus();
+}
+async function sendMsg(text,via){
+  const a=state.active;text=(text||"").trim();if(!a||!text)return false;
+  const now=new Date().toISOString();const t=threadById(a.id);
+  try{
+    await state.db.collection(`threads/${a.id}/messages`).doc().set({from:state.uid,text,at:now,via});
+    await state.db.doc("threads/"+a.id).set({starterId:a.starterId,alumniId:a.alumniId,createdAt:t?.createdAt||now,lastAt:now,lastFrom:state.uid,lastText:text.slice(0,140),lastVia:via});
+    state.reads={...state.reads,[a.id]:now};
+    state.db.doc(`data/users/${state.uid}/reads`).set(state.reads).catch(()=>{});
+    return true;
+  }catch(e){toast(e?.code==="invalid_argument"?"Your access level can't send messages. Ask the directory owner for Contributor access.":"Message not sent. Check your connection and try again.");return false}
+}
+
+function renderMsgs(scroll){
+  const root=$("msgRoot");
+  const ta=$("m_text");const hadFocus=!!ta&&document.activeElement===ta;if(ta)state.draft=ta.value;
+  if(!state.ready){root.innerHTML=`<div class="empty" style="margin-top:18px"><h2>Loading…</h2></div>`;return}
+  if(!state.uid){root.innerHTML=`<div class="empty" style="margin-top:18px"><h2>Messaging comes with the full site</h2><p>Messaging is turned off in this preview. It works once the full site is hosted with sign-in.</p></div>`;return}
+  if(!state.member){root.innerHTML=`<div class="empty" style="margin-top:18px"><h2>Join the network to start messaging</h2><p>Say whether you're a student, a graduate or staff so people know who's reaching out.</p><button class="btn" type="button" data-act="join">Join the network</button></div>`;return}
+  const pool=state.staffMode?state.allThreads:state.threads;
+  const list=Object.values(pool).sort((a,b)=>(b.lastAt||"").localeCompare(a.lastAt||""));
+  ensureNames([...list.map(t=>t.starterId),...state.msgs.map(m=>m.from)]);
+  const act=state.active?{...state.active,...(threadById(state.active.id)||{})}:null;
+  const items=list.map(t=>{const o=otherParty(t);return `<button class="titem" type="button" data-act="open" data-tid="${esc(t.id)}" aria-current="${act?.id===t.id}"><span class="dot ${isUnread(t)?"":"off"}" ${isUnread(t)?'aria-label="Unread"':""}></span><span class="t"><span class="tname">${esc(o.name)}</span><span class="snip">${t.lastFrom===state.uid?"You: ":""}${t.lastVia==="email"?"(email) ":""}${esc(t.lastText||"")}</span></span><span class="when">${esc(fmtTime(t.lastAt))}</span></button>`}).join("")
+    ||`<p class="role" style="padding:16px">${state.staffMode?"No conversations on the network yet.":"No conversations yet. Open someone's profile in the Directory and choose <b>Message on the network</b>."}</p>`;
+  let convo=`<p class="sysnote">Choose a conversation.</p>`;
+  if(act){
+    const o=otherParty(act);
+    const participant=act.starterId===state.uid||(state.member.alumniId&&act.alumniId===state.member.alumniId);
+    const alum=state.alumni.find(x=>x.id===act.alumniId);
+    const bubbles=state.msgs.map(m=>{const mine=m.from===state.uid;return `<div class="bubble ${mine?"mine":""}">${!mine||!participant?`<span class="from">${esc(personName(m.from))}</span>`:""}${esc(m.text)}<span class="ts">${m.via==="email"?"Sent by email · ":""}${esc(fmtTime(m.at))}</span></div>`}).join("")
+      ||`<p class="sysnote">${alum&&!alum.claimedBy?`${esc(alum.name)} hasn't joined the network yet. Your message will wait here until they link their profile. You can also email them.`:"No messages yet. Introduce yourself and ask one specific question."}</p>`;
+    convo=`<div class="chead"><div style="display:flex;gap:10px;align-items:center;min-width:0"><button class="btn ghost small back" type="button" data-act="back">← Back</button><div style="min-width:0"><span class="tname">${esc(o.name)}</span><span class="role" style="font-size:13px">${esc(o.sub)}</span></div></div>
+      ${alum&&act.starterId===state.uid?`<div class="actions">${alum.email?`<button class="btn ghost small" type="button" data-act="email" data-id="${esc(alum.id)}">Email instead</button>`:""}<button class="btn ghost small" type="button" data-act="viewprof" data-id="${esc(alum.id)}">Profile</button></div>`:""}</div>
+      <div class="cbody" id="cbody">${bubbles}</div>
+      ${participant?`<form class="composer" id="mform"><label for="m_text" hidden>Message</label><textarea id="m_text" rows="2" maxlength="4000" placeholder="Write a message… (Ctrl+Enter to send)"></textarea><button class="btn" type="submit">Send</button></form>`:`<p class="privacy">Staff review: you can read this conversation but not reply in it.</p>`}`;
+  }
+  root.innerHTML=`<div class="msg-top"><p class="privacy">Messages are kept in this directory's shared storage. This page shows each conversation only to the two people in it and to staff reviewers. Anyone with edit access to the directory can read all messages, so don't share passwords or private personal details.</p>${state.canAdmin?`<label class="staff-toggle"><input type="checkbox" id="m_staff" ${state.staffMode?"checked":""}> Review all conversations (staff)</label>`:""}</div>
+  <div class="msgs ${act?"open":""}"><div class="tlist">${items}</div><div class="convo">${convo}</div></div>`;
+  const nta=$("m_text");
+  if(nta){
+    nta.value=state.draft;if(hadFocus){nta.focus();nta.setSelectionRange(nta.value.length,nta.value.length)}
+    nta.addEventListener("input",()=>state.draft=nta.value);
+    nta.addEventListener("focus",()=>state.active&&markRead(state.active.id));
+    nta.addEventListener("keydown",e=>{if(e.key==="Enter"&&(e.metaKey||e.ctrlKey)){e.preventDefault();$("mform").requestSubmit()}});
+    $("mform").addEventListener("submit",async e=>{e.preventDefault();const btn=e.target.querySelector("button");const txt=nta.value;if(!txt.trim())return;btn.disabled=true;if(await sendMsg(txt,"platform")){state.draft="";if($("m_text"))$("m_text").value=""}btn.disabled=false;$("m_text")?.focus()});
+  }
+  $("m_staff")?.addEventListener("change",e=>{state.staffMode=e.target.checked;if(state.staffMode)subscribeAll();state.unsubMsgs?.();state.unsubMsgs=null;state.active=null;renderMsgs()});
+  const cb=$("cbody");if(cb&&(scroll||hadFocus))cb.scrollTop=cb.scrollHeight;
+}
+
+function showEmail(alumId){
+  const a=state.alumni.find(x=>x.id===alumId);if(!a)return;
+  const first=(a.name||"").split(" ")[0];
+  const me=state.myName||"[your name]";
+  const role=state.member?.role==="alum"?"fellow graduate":state.member?.role==="staff"?"staff member":"student";
+  const subj=`${state.school} ${role} reaching out`;
+  const body=`Hi ${first},\n\nMy name is ${me}, and I'm a ${role} at ${state.school}. I found your profile in our alumni network and I'm interested in ${(a.specialty||a.field||"your field").toLowerCase()}. Would you be open to a short conversation about your work as ${a.title||"a professional in your field"}?\n\nThank you for your time,\n${me}`;
+  openSheet(`<div class="sheet-head"><div><div class="eyebrow">Email</div><h2>${esc(a.name)}</h2></div><button class="x" type="button" data-act="close" aria-label="Close">×</button></div>
+    ${a.sample?`<div class="notice">Sample profile: ${esc(a.email||"this address")} is made up and can't receive email.</div>`:""}
+    ${a.email?`${contactRow("To",a.email)}
+    <label class="f">Subject<input id="e_subj" value="${esc(subj)}"></label>
+    <label class="f">Message<textarea id="e_body" rows="9">${esc(body)}</textarea></label>
+    <div class="actions"><a class="btn" id="e_open" target="_blank" rel="noopener" href="#">Open in my email app</a><button class="btn ghost" type="button" id="e_copy">Copy message</button></div>
+    <p class="tip">The email goes from your own email account. If the button doesn't open your email app, copy the address and the message and paste them into a new email.</p>
+    ${state.member&&state.member.alumniId!==a.id?`<div class="stack"><button class="btn ghost" type="button" id="e_log">I sent it: save a copy in Messages</button><p class="role" style="font-size:12.5px">Keeps a record in your conversation with ${esc(first)}, so you can track who you've contacted and continue on the network.</p></div>`:""}`
+    :`<p>${esc(a.name)} hasn't listed an email address. Send a message on the network instead.</p>`}`);
+  if(!a.email)return;
+  const upd=()=>{$("e_open").href=`mailto:${a.email}?subject=${encodeURIComponent($("e_subj").value)}&body=${encodeURIComponent($("e_body").value)}`};
+  upd();$("e_subj").addEventListener("input",upd);$("e_body").addEventListener("input",upd);
+  $("e_copy").addEventListener("click",async ev=>{const b=ev.currentTarget;const txt=`Subject: ${$("e_subj").value}\n\n${$("e_body").value}`;try{await navigator.clipboard.writeText(txt);b.textContent="Copied"}catch{$("e_body").select();b.textContent="Selected"}setTimeout(()=>b.textContent="Copy message",1500)});
+  $("e_log")?.addEventListener("click",async()=>{
+    const txt=`Subject: ${$("e_subj").value}\n\n${$("e_body").value}`;
+    closeSheet();state.staffMode=false;setView("messages");
+    openThread(tidFor(state.uid,alumId),{starterId:state.uid,alumniId:alumId});
+    if(await sendMsg(txt,"email"))toast("Saved in Messages");
+  });
+}
+
+const VIEWS=["directory","internships","messages"];
+function setView(v){
+  if(!VIEWS.includes(v))v="directory";
+  state.view=v;
+  $("viewDir").hidden=v!=="directory";$("fieldsNav").hidden=v!=="directory";$("viewMsg").hidden=v!=="messages";$("viewInt").hidden=v!=="internships";
+  document.querySelectorAll(".vtab").forEach(b=>b.setAttribute("aria-current",b.dataset.view===v?"page":"false"));
+  if(location.hash!=="#"+v){try{location.hash=v}catch{}}
+  if(v==="messages")renderMsgs(true);
+  if(v==="internships")renderInternships();
+  updateBadge();
+}
+window.addEventListener("hashchange",()=>{const v=location.hash.slice(1);if(VIEWS.includes(v)&&v!==state.view)setView(v)});
+
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-act],[data-view]");if(!t)return;
+  if(t.dataset.view){setView(t.dataset.view);return}
+  const act=t.dataset.act;
+  if(act==="join")showJoin();
+  else if(act==="msg")startMessage(t.dataset.id);
+  else if(act==="email")showEmail(t.dataset.id);
+  else if(act==="open")openThread(t.dataset.tid,threadById(t.dataset.tid));
+  else if(act==="back"){state.unsubMsgs?.();state.unsubMsgs=null;state.active=null;renderMsgs()}
+  else if(act==="viewprof")showProfile(t.dataset.id);
+  else if(act==="pg"){state.page=Math.max(1,+t.dataset.p||1);render();$("resultLine").scrollIntoView({block:"start",behavior:"smooth"})}
+  else if(act==="postint")showIntForm();
+  else if(act==="editint"){const it=allInternships().find(i=>i.id===t.dataset.iid&&i.owner===t.dataset.owner);if(it)showIntForm(it)}
+});
+
+/* ---------- internships ---------- */
+const GRADE_LEVELS=["9th grade","10th grade","11th grade","12th grade","Recent graduates"];
+Object.assign(state,{page:1,real:[],samples:[],intSamples:[],intDocs:{},intFilter:{pay:"",grade:"",field:"",closed:false}});
+const intClosed=i=>!i.isOpen||(!!i.deadline&&new Date(i.deadline+"T23:59:59")<new Date());
+/* Real postings live in internships/<poster id> as {posts:[...]}; made-up ones come from sample-internships.json. */
+function allInternships(){
+  const real=[];
+  for(const [uid,d] of Object.entries(state.intDocs))(Array.isArray(d.posts)?d.posts:[]).forEach(p=>real.push({...p,owner:uid}));
+  return [...real,...state.intSamples].sort((a,b)=>(b.createdAt||"").localeCompare(a.createdAt||""));
+}
+const canPostInt=()=>(!!state.member&&(state.member.role==="alum"||state.member.role==="staff"))||state.canAdmin;
+function posterOf(i){
+  if(i.owner){
+    const m=state.members[i.owner];const prof=m?.alumniId?state.alumni.find(x=>x.id===m.alumniId):null;
+    return{name:personName(i.owner),line:[m?.role?ROLE_LABEL[m.role]:"",m?.gradYear?yr(m.gradYear):"",prof?.title&&prof?.organization?`${prof.title} at ${prof.organization}`:""].filter(Boolean).join(" · "),profileId:prof?.id||null};
+  }
+  const p=state.alumni.find(x=>x.id===i.posterProfile);
+  return{name:p?.name||"Sample poster",line:[p?yr(p.classYear):"",p?.title&&p?.organization?`${p.title} at ${p.organization}`:""].filter(Boolean).join(" · "),profileId:p?.id||null};
+}
+function fmtDay(d){try{return new Date(d+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}catch{return d}}
+function intCard(i,compact){
+  const closed=intClosed(i),po=posterOf(i);
+  let href="";try{const u=new URL(i.signupUrl);if(/^https?:$/.test(u.protocol))href=u.href}catch{}
+  const reqs=[(i.gradeLevels||[]).length?`Open to: ${i.gradeLevels.join(", ")}`:"",i.minGpa!=null&&i.minGpa!==""?`Minimum GPA ${Number(i.minGpa).toFixed(1)}`:""].filter(Boolean);
+  const canEdit=!!i.owner&&(i.owner===state.uid||state.canAdmin);
+  return `<article class="intern ${closed?"closed":""}">
+    <header class="intern-head"><div style="min-width:0"><div class="intern-company">${esc(i.company)}</div><h3>${esc(i.roleTitle)}</h3></div>
+      <div class="meta">${i.owner?"":`<span class="chip sample">Sample</span>`}${closed?`<span class="chip">Closed</span>`:`<span class="chip open">Open</span>`}<span class="chip ${i.paid?"paid":""}">${i.paid?`Paid${i.payDetails?` · ${esc(i.payDetails)}`:""}`:"Unpaid"}</span></div></header>
+    <p class="intern-desc">${esc(i.description)}</p>
+    <dl class="facts"><div><dt>Spots</dt><dd>${i.spots?`${esc(i.spots)} ${i.spots==1?"intern":"interns"}`:"Not set"}</dd></div>${i.location?`<div><dt>Where</dt><dd>${esc(i.location)}</dd></div>`:""}${i.deadline?`<div><dt>Apply by</dt><dd>${esc(fmtDay(i.deadline))}</dd></div>`:""}${i.field?`<div><dt>Field</dt><dd>${esc(i.field)}</dd></div>`:""}</dl>
+    ${!compact&&(reqs.length||i.experience)?`<div class="reqs"><div class="section-label">Requirements</div>${reqs.length?`<p>${esc(reqs.join(" · "))}</p>`:""}${i.experience?`<p>${esc(i.experience)}</p>`:""}</div>`:""}
+    <footer class="intern-foot"><div class="small" style="min-width:0">Posted by ${po.profileId?`<button class="linklike" type="button" data-act="viewprof" data-id="${esc(po.profileId)}">${esc(po.name)}</button>`:`<b>${esc(po.name)}</b>`}${po.line?`<span class="muted"> · ${esc(po.line)}</span>`:""}</div>
+      <div class="actions">${canEdit&&!compact?`<button class="btn ghost small" type="button" data-act="editint" data-iid="${esc(i.id)}" data-owner="${esc(i.owner)}">Edit</button>`:""}${href&&!closed?`<a class="btn small" href="${esc(href)}" target="_blank" rel="noopener noreferrer">Sign up ↗</a>`:""}</div></footer>
+  </article>`;
+}
+function renderNews(){
+  const open=allInternships().filter(i=>!intClosed(i));
+  $("newsPost").hidden=!canPostInt();
+  $("newsAll").textContent=open.length?`See all (${open.length})`:"See all";
+  $("newsList").innerHTML=open.length?`<div class="intern-grid">${open.slice(0,3).map(i=>intCard(i,true)).join("")}</div>`
+    :`<p class="muted" style="margin:0">No open internships right now. ${canPostInt()?"Know of one? Post it so students can apply.":"Check back soon. Graduates and staff post openings here."}</p>`;
+}
+function renderInternships(){
+  const f=state.intFilter,all=allInternships();
+  const fields=FIELDS.filter(x=>all.some(i=>i.field===x));
+  const list=all.filter(i=>(f.closed||!intClosed(i))&&(!f.pay||(f.pay==="paid")===!!i.paid)&&(!f.grade||!(i.gradeLevels||[]).length||i.gradeLevels.includes(f.grade))&&(!f.field||i.field===f.field));
+  $("intRoot").innerHTML=`<div class="newsbox-head" style="margin-top:20px"><div><div class="eyebrow">Opportunities</div><h2 style="font-size:28px">Internships</h2><p class="muted" style="margin:6px 0 0">Openings shared by graduates and staff. Apply through each posting's sign-up link.</p></div>${canPostInt()?`<button class="btn" type="button" data-act="postint">+ Post an internship</button>`:""}</div>
+    <div class="toolbar">
+      <select id="if_pay" aria-label="Pay"><option value="">Paid and unpaid</option><option value="paid">Paid only</option><option value="unpaid">Unpaid only</option></select>
+      <select id="if_grade" aria-label="Grade"><option value="">Any grade</option>${GRADE_LEVELS.map(g=>`<option>${esc(g)}</option>`).join("")}</select>
+      <select id="if_field" aria-label="Field"><option value="">All fields</option>${fields.map(x=>`<option>${esc(x)}</option>`).join("")}</select>
+      <label class="checks-inline"><input type="checkbox" id="if_closed" ${f.closed?"checked":""}> Show closed</label>
+    </div>
+    <p class="result-line">${list.length} ${list.length===1?"internship":"internships"}</p>
+    <div class="intern-grid">${list.map(i=>intCard(i,false)).join("")||`<div class="empty"><h2>${all.length?"No matches":"No internships posted yet"}</h2><p>${all.length?"Try different filters.":"Graduates and staff can post openings here."}</p></div>`}</div>`;
+  $("if_pay").value=f.pay;$("if_grade").value=f.grade;$("if_field").value=f.field;
+  $("if_pay").onchange=e=>{f.pay=e.target.value;renderInternships()};
+  $("if_grade").onchange=e=>{f.grade=e.target.value;renderInternships()};
+  $("if_field").onchange=e=>{f.field=e.target.value;renderInternships()};
+  $("if_closed").onchange=e=>{f.closed=e.target.checked;renderInternships()};
+}
+function renderAllInt(){renderNews();if(state.view==="internships")renderInternships()}
+
+async function writePosts(owner,mutate){
+  const next=mutate((state.intDocs[owner]?.posts||[]).map(p=>({...p})));
+  await state.db.doc("internships/"+owner).set({posts:next,updatedAt:new Date().toISOString()});
+}
+function showIntForm(item){
+  if(!state.db||!state.uid){toast("Sign-in is turned off in this preview.");return}
+  if(!canPostInt()){toast("Only graduates and staff can post internships. Join the network as a graduate first.");if(!state.member)showJoin();return}
+  const i=item||{gradeLevels:[]};
+  openSheet(`<div class="sheet-head"><h2>${item?"Edit internship":"Post an internship"}</h2><button class="x" type="button" data-act="close" aria-label="Close">×</button></div>
+  <form id="iform" novalidate>
+    <div class="row2"><label class="f">Company *<input id="i_company" maxlength="120" value="${esc(i.company)}"></label>
+      <label class="f">Internship title *<input id="i_title" maxlength="120" placeholder="Summer engineering intern" value="${esc(i.roleTitle)}"></label></div>
+    <label class="f">What the intern will do * <small>A few sentences, up to 600 characters.</small><textarea id="i_desc" rows="4" maxlength="600">${esc(i.description)}</textarea></label>
+    <label class="f">Sign-up link * <small>Where students apply.</small><input id="i_url" type="url" placeholder="https://" value="${esc(i.signupUrl)}"></label>
+    <fieldset><legend>Paid or unpaid? *</legend><div class="checks">
+      <label><input type="radio" name="i_paid" id="i_paid_yes" value="yes" ${item&&i.paid?"checked":""}> Paid</label>
+      <label><input type="radio" name="i_paid" id="i_paid_no" value="no" ${item&&!i.paid?"checked":""}> Unpaid</label></div></fieldset>
+    <label class="f" id="i_payL">Pay <small>Optional, e.g. $18/hour or $2,000 stipend</small><input id="i_pay" maxlength="120" value="${esc(i.payDetails)}"></label>
+    <div class="row2"><label class="f">How many interns?<input id="i_spots" type="number" min="1" max="1000" value="${esc(i.spots??"")}"></label>
+      <label class="f">Application deadline<input id="i_deadline" type="date" value="${esc(i.deadline)}"></label></div>
+    <div class="row2"><label class="f">Location <small>City, or Remote</small><input id="i_loc" maxlength="120" value="${esc(i.location)}"></label>
+      <label class="f">Field<select id="i_field"><option value="">Choose a field</option>${FIELDS.map(x=>`<option ${i.field===x?"selected":""}>${esc(x)}</option>`).join("")}</select></label></div>
+    <fieldset><legend>Who can apply</legend><div class="checks">${GRADE_LEVELS.map((g,k)=>`<label><input type="checkbox" id="i_g${k}" ${(i.gradeLevels||[]).includes(g)?"checked":""}> ${esc(g)}</label>`).join("")}</div></fieldset>
+    <div class="row2"><label class="f">Minimum GPA <small>Optional</small><input id="i_gpa" type="number" step="0.1" min="0" max="5" value="${esc(i.minGpa??"")}"></label><div></div></div>
+    <label class="f">Experience or skills required <small>Optional, e.g. "Took AP Biology"</small><textarea id="i_exp" rows="2" maxlength="600">${esc(i.experience)}</textarea></label>
+    ${item?`<label class="checks-inline"><input type="checkbox" id="i_open" ${i.isOpen?"checked":""}> Still accepting applications</label>`:""}
+    <div class="err" id="ierr" role="alert"></div>
+    <div class="actions"><button class="btn" type="submit" id="isave">${item?"Save changes":"Post internship"}</button>${item?`<button class="btn danger" type="button" id="idel">Delete posting</button>`:""}</div>
+    <div id="idelZone"></div>
+  </form>`);
+  const syncPay=()=>{$("i_payL").hidden=!$("i_paid_yes").checked};
+  document.querySelectorAll('input[name="i_paid"]').forEach(r=>r.addEventListener("change",syncPay));syncPay();
+  const owner=item?.owner||state.uid;
+  const fail=err=>{$("isave").disabled=false;$("ierr").textContent=err?.code==="invalid_argument"?"Your access level can't post here. Ask the directory owner for Contributor access.":"Couldn't save. Check your connection and try again."};
+  $("iform").addEventListener("submit",async e=>{e.preventDefault();
+    const v=id=>$(id).value.trim();const paid=document.querySelector('input[name="i_paid"]:checked')?.value;
+    const rec={company:v("i_company"),roleTitle:v("i_title"),description:v("i_desc"),signupUrl:v("i_url"),spots:parseInt(v("i_spots"))||null,
+      gradeLevels:GRADE_LEVELS.filter((g,k)=>$("i_g"+k).checked),minGpa:v("i_gpa")===""?null:Number(v("i_gpa")),experience:v("i_exp"),
+      paid:paid==="yes",payDetails:paid==="yes"?v("i_pay"):"",location:v("i_loc"),field:v("i_field"),deadline:v("i_deadline"),isOpen:item?$("i_open").checked:true};
+    const err=$("ierr");
+    if(!rec.company||!rec.roleTitle||!rec.description){err.textContent="Add the company, the internship title and a short description.";return}
+    if(!/^https?:\/\/\S+$/i.test(rec.signupUrl)){err.textContent="Add the sign-up link, starting with https://";return}
+    if(!paid){err.textContent="Say whether the internship is paid or unpaid.";return}
+    if(rec.spots!==null&&(rec.spots<1||rec.spots>1000)){err.textContent="Spots must be between 1 and 1,000.";return}
+    if(rec.minGpa!==null&&(isNaN(rec.minGpa)||rec.minGpa<0||rec.minGpa>5)){err.textContent="Minimum GPA must be between 0 and 5.";return}
+    $("isave").disabled=true;err.textContent="";const now=new Date().toISOString();
+    try{
+      await writePosts(owner,posts=>item?posts.map(p=>p.id===item.id?{...p,...rec,updatedAt:now}:p)
+        :[{id:"i"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),...rec,createdAt:now,updatedAt:now},...posts]);
+      closeSheet();toast(item?"Internship updated":"Internship posted");
+    }catch(x){fail(x)}
+  });
+  $("idel")?.addEventListener("click",()=>{
+    $("idelZone").innerHTML=`<div class="notice">Delete this posting for everyone? <div class="actions" style="margin-top:8px"><button class="btn danger small" type="button" id="idelYes">Yes, delete</button><button class="btn ghost small" type="button" id="idelNo">Keep it</button></div></div>`;
+    $("idelNo").onclick=()=>$("idelZone").innerHTML="";
+    $("idelYes").onclick=async()=>{try{await writePosts(owner,posts=>posts.filter(p=>p.id!==item.id));closeSheet();toast("Posting deleted")}catch(x){fail(x)}};
+  });
+}
+
+/* ---------- data ---------- */
+function mergeAlumni(){state.alumni=[...state.real,...state.samples];render();renderAllInt();if(state.view==="messages")renderMsgs()}
+fetch("sample-alumni.json").then(r=>r.ok?r.json():[]).then(list=>{state.samples=list.map(a=>prep({...a,sample:true,static:true,consent:true}));state.loaded=true;mergeAlumni()}).catch(()=>{});
+fetch("sample-internships.json").then(r=>r.ok?r.json():[]).then(list=>{state.intSamples=list;renderAllInt()}).catch(()=>{});
+state.school="Our High School";
+setView(VIEWS.includes(location.hash.slice(1))?location.hash.slice(1):"directory");
+render();renderNews();
+(async()=>{
+  const timer=setTimeout(()=>{if(!state.loaded){state.loaded=true;notice("The directory can't be reached yet. It will fill in once the connection returns.");render()}},10000);
+  const use=n=>window.claude?.use?Promise.resolve(window.claude.use(n)).catch(()=>null):Promise.resolve(null);
+  const [db,user]=await Promise.all([use("db"),use("user")]);
+  state.user=user;
+  if(user){
+    state.canAdmin=await user.canEdit().catch(()=>false);
+    const w=await user.can("data.write").catch(()=>null);state.canWrite=w;
+    state.uid=await user.id().catch(()=>null);
+    try{state.myName=(await user.me())?.name||""}catch{}
+  }
+  if(!db){clearTimeout(timer);state.loaded=true;state.ready=true;state.uid=null;state.canWrite=false;notice("Preview version: you can browse the directory and internships. Signing in, messaging and posting work once the full site is hosted.");render();renderAcct();renderAllInt();if(state.view==="messages")renderMsgs();return}
+  state.db=db;state.ready=true;
+  if(state.uid){
+    db.doc("members/"+state.uid).onSnapshot(s=>{state.member=s.exists?s.data():null;renderAcct();subscribeThreads();renderAllInt();if(state.view==="messages")renderMsgs()},()=>{});
+    db.collection("members").limit(1000).onSnapshot(s=>{state.members=Object.fromEntries(s.docs.map(d=>[d.id,d.data()]));renderAllInt();if(state.view==="messages")renderMsgs()},()=>{});
+    db.doc(`data/users/${state.uid}/reads`).onSnapshot(s=>{if(s.exists){const r={...state.reads};for(const [k,v] of Object.entries(s.data()||{}))if(!(r[k]>=v))r[k]=v;state.reads=r}updateBadge()},()=>{});
+  }
+  renderAcct();if(state.view==="messages")renderMsgs();
+  db.doc("config/school").onSnapshot(s=>{const n=s.exists&&s.data()?.name;if(n){state.school=n;$("schoolName").textContent=n;document.title=n+" Alumni Network"}},()=>{});
+  db.collection("internships").onSnapshot(s=>{state.intDocs=Object.fromEntries(s.docs.map(d=>[d.id,d.data()]));renderAllInt()},()=>{});
+  db.collection("alumni").onSnapshot(snap=>{
+    state.real=snap.docs.map(d=>prep({id:d.id,...d.data()}));
+    if(!snap.metadata.fromCache){clearTimeout(timer);notice("")}
+    state.loaded=true;mergeAlumni();
+  },err=>{clearTimeout(timer);state.loaded=true;notice("The directory couldn't load. Reload the page to try again.");render()});
+})();
+</script>
+
+</body>
+</html>

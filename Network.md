@@ -13,6 +13,8 @@ There are two versions:
 | Message privacy | The page only shows each conversation to the people in it and staff, but anyone with edit access can read all messages | Enforced by the database: only the two people and staff |
 | Sample data | Loaded from data files published with the page | Loaded from `supabase/seed.sql` |
 
+A third, browse-only preview lives in `docs/` for GitHub Pages: the directory and internships work, sign-in and messaging are turned off.
+
 Both use the same 5,000 made-up alumni and 33 made-up internships.
 
 ---

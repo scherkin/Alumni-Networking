@@ -21,6 +21,16 @@ Messages appear on the site in real time and are emailed to the other person at 
 
 Stack: Next.js 14 (App Router), Supabase (Postgres, Auth, Realtime), Resend for email. Hosting on Vercel.
 
+## Preview on GitHub Pages
+
+The `docs/` folder is a self-contained preview you can host for free before the full site is set up. It shows the
+directory (5,000 sample alumni, search, filters, sorting, paging), profiles and the internships board. Sign-in,
+messaging, claiming and posting are turned off in the preview.
+
+To publish it: in the repository go to **Settings → Pages**, set **Source** to **Deploy from a branch**, choose the
+`main` branch and the `/docs` folder, and save. After a minute or two the preview is live at
+`https://YOUR-USERNAME.github.io/YOUR-REPOSITORY/`.
+
 ## What LinkedIn sign-in provides
 
 LinkedIn's "Sign In with LinkedIn using OpenID Connect" shares only **name, email address and profile photo**.
